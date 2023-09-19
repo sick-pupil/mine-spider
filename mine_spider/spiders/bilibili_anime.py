@@ -120,7 +120,7 @@ class BilibiliAnimeSpider(Spider):
                     
                     animeRankItem = BilibiliRankItem()
                     animeRankItem['block_name'] = block_name
-                    animeRankItem['rank_hot_time_range'] = block_hot_time_range
+                    animeRankItem['block_hot_time_range'] = block_hot_time_range
                     animeRankItem['rank_item_num'] = rank_item_num
                     animeRankItem['rank_item_href'] = rank_item_href
                     animeRankItem['rank_item_detail_title'] = rank_item_detail_title
@@ -144,8 +144,7 @@ class BilibiliAnimeSpider(Spider):
                         rank_item_pubman = await video_info.locator("//span[@class='name']").inner_text()
                         # 热门排行项简介
                         rank_item_desc = await video_info.locator("//p[@class='txt']").inner_text()
-                        
-                        
+
                         animeRankItem['rank_item_pubman'] = rank_item_pubman
                         animeRankItem['rank_item_desc'] = rank_item_desc
                         animeRankItem['rank_item_time'] = rank_item_time
@@ -153,7 +152,15 @@ class BilibiliAnimeSpider(Spider):
                         animeRankItem['rank_item_danmu'] = rank_item_danmu
                         animeRankItem['rank_item_star'] = rank_item_star
                         animeRankItem['rank_item_coin'] = rank_item_coin
-                
+                    else:
+                        animeRankItem['rank_item_pubman'] = ''
+                        animeRankItem['rank_item_desc'] = ''
+                        animeRankItem['rank_item_time'] = ''
+                        animeRankItem['rank_item_play'] = ''
+                        animeRankItem['rank_item_danmu'] = ''
+                        animeRankItem['rank_item_star'] = ''
+                        animeRankItem['rank_item_coin'] = ''
+
                     self.bilibili_anime['rank_list'].append(animeRankItem)
                 
                 # 点击热门时间范围
@@ -179,7 +186,7 @@ class BilibiliAnimeSpider(Spider):
                     
                     animeRankItem = BilibiliRankItem()
                     animeRankItem['block_name'] = block_name
-                    animeRankItem['rank_hot_time_range'] = block_hot_time_range
+                    animeRankItem['block_hot_time_range'] = block_hot_time_range
                     animeRankItem['rank_item_num'] = rank_item_num
                     animeRankItem['rank_item_href'] = rank_item_href
                     animeRankItem['rank_item_detail_title'] = rank_item_detail_title
@@ -204,7 +211,6 @@ class BilibiliAnimeSpider(Spider):
                         # 热门排行项简介
                         rank_item_desc = await video_info.locator("//p[@class='txt']").inner_text()
                         
-                        
                         animeRankItem['rank_item_pubman'] = rank_item_pubman
                         animeRankItem['rank_item_desc'] = rank_item_desc
                         animeRankItem['rank_item_time'] = rank_item_time
@@ -212,6 +218,14 @@ class BilibiliAnimeSpider(Spider):
                         animeRankItem['rank_item_danmu'] = rank_item_danmu
                         animeRankItem['rank_item_star'] = rank_item_star
                         animeRankItem['rank_item_coin'] = rank_item_coin            
+                    else:
+                        animeRankItem['rank_item_pubman'] = ''
+                        animeRankItem['rank_item_desc'] = ''
+                        animeRankItem['rank_item_time'] = ''
+                        animeRankItem['rank_item_play'] = ''
+                        animeRankItem['rank_item_danmu'] = ''
+                        animeRankItem['rank_item_star'] = ''
+                        animeRankItem['rank_item_coin'] = ''
 
                     self.bilibili_anime['rank_list'].append(animeRankItem)
 
@@ -221,7 +235,7 @@ class BilibiliAnimeSpider(Spider):
         for animeRankItem in self.bilibili_anime['rank_list']:
             logging.info('{}频道{}区域{}热门排行：{}：{} {} {}'.format(self.channel_name, 
                                                      animeRankItem['block_name'], 
-                                                     animeRankItem['rank_hot_time_range'],
+                                                     animeRankItem['block_hot_time_range'],
                                                      animeRankItem['rank_item_num'], 
                                                      animeRankItem['rank_item_detail_title'], 
                                                      animeRankItem['rank_item_detail_point'], 
