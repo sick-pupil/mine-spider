@@ -5,7 +5,7 @@ Created on Sat Sep 16 19:39:43 2023
 @author: Administrator
 """
 
-from ..items import BilibiliItem, BilibiliAnimeItem
+from ..items import Result, BilibiliChannel, BilibiliRankItem, BilibiliVideoDetail, BilibiliVideoDanmu, BilibiliUpInfo
 from scrapy import Spider, Selector, Request
 import logging
 
@@ -20,12 +20,17 @@ class BilibiliAnimeSpider(Spider):
         'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 60 * 1000,
         'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 20,
         'ITEM_PIPELINES': {
-            'mine_spider.pipelines.BilibiliPipeline': 500
+            'mine_spider.pipelines.BilibiliAnimePipeline': 500
         },
     }
 
     def __init__(self):
         self.channel_name = '番剧'
+        self.result = Result()
+        self.bilibili_anime = BilibiliChannel()
+        self.bilibili_anime['channel_name'] = self.channel_name
+        self.bilibili_anime['rank_list'] = list()
+        self.result['data'] = self.bilibili_anime
     
     def start_requests(self):
         yield Request(url = self.start_url, 
@@ -46,10 +51,7 @@ class BilibiliAnimeSpider(Spider):
         )
     
     # 番剧
-    async def anime_parse(self, response):
-        result = BilibiliItem()
-        data_list_result = []
-        
+    async def anime_parse(self, response):        
         
         logging.info('请求频道{}， ua为{}'.format(self.channel_name, response.request.headers['user-agent']))
         page = response.meta['playwright_page']
@@ -92,123 +94,146 @@ class BilibiliAnimeSpider(Spider):
                 
             # 开始解析
             pass
-            # 取番剧区的每个小类区
+            
+            # 取番剧区的每个小类区            
             block_list = await page.locator(selector = "//div[@class='block-area block-bangumi']", has = page.locator(selector = "//h4[@class='name']")).all()
+            
             for block_item in block_list:
-                # 小类区名字
+                # 小类区名称
                 block_name = await block_item.locator("//h4[@class='name']").inner_text()
-                # 小类区热门列表时间范围
+                # 小类区热门排行时间范围
                 block_hot_time_range = await block_item.locator("//span[@class='selected']").inner_text()
                 # 小类区热门列表
                 rank_item_list_in_block = await block_item.locator("//li[contains(@class, 'rank-item')]").all()
+                                
                 for rank_item in rank_item_list_in_block:
-                    # 热门项序号
-                    rank_num = await rank_item.locator("//i[@class='ri-num']").inner_text()
-                    rank_base_info = rank_item.locator("//a[@class='ri-info-wrap clearfix']")
-                    # 热门视频链接
-                    rank_href = await rank_base_info.get_attribute('href')
-                    rank_detail = rank_base_info.locator("//div[@class='ri-detail']")
-                    # 热门视频标题
-                    rank_detail_title = await rank_detail.locator("//p[@class='ri-title']").inner_text()
-                    # 热门视频综合评分
-                    rank_detail_point = await rank_detail.locator("//p[@class='ri-point']").inner_text()
+                    # 热门排行项序号
+                    rank_item_num = await rank_item.locator("//i[@class='ri-num']").inner_text()
+                    rank_item_base_info = rank_item.locator("//a[@class='ri-info-wrap clearfix']")
+                    # 热门排行项视频链接
+                    rank_item_href = await rank_item_base_info.get_attribute('href')
+                    rank_item_detail = rank_item_base_info.locator("//div[@class='ri-detail']")
+                    # 热门排行项视频标题
+                    rank_item_detail_title = await rank_item_detail.locator("//p[@class='ri-title']").inner_text()
+                    # 热门排行项综合评分
+                    rank_item_detail_point = await rank_item_detail.locator("//p[@class='ri-point']").inner_text()
                     
-                    logging.info('小类区名称：{} 小类区热门时间范围：{} 热门排行：{} 热门项链接：{} 热门项标题：{} 热门项评分：{}'.format(block_name, block_hot_time_range, rank_num, rank_href, rank_detail_title, rank_detail_point))
+                    animeRankItem = BilibiliRankItem()
+                    animeRankItem['block_name'] = block_name
+                    animeRankItem['rank_hot_time_range'] = block_hot_time_range
+                    animeRankItem['rank_item_num'] = rank_item_num
+                    animeRankItem['rank_item_href'] = rank_item_href
+                    animeRankItem['rank_item_detail_title'] = rank_item_detail_title
+                    animeRankItem['rank_item_detail_point'] = rank_item_detail_point
                     
                     if block_name != '完结动画':
                         await rank_item.hover()
                         await page.wait_for_timeout(500)
                         video_info = page.locator("//div[@class='video-info-module']")
-                        # 视频发布时间
-                        time = await video_info.locator("//span[@class='time']").inner_text()
-                        # 视频播放次数
-                        play = await video_info.locator("//span[@class='play']").inner_text()
-                        # 视频弹幕数量
-                        danmu = await video_info.locator("//span[@class='danmu']").inner_text()
-                        # 视频收藏数量
-                        star = await video_info.locator("//span[@class='star']").inner_text()
-                        # 视频硬币数量
-                        coin = await video_info.locator("//span[@class='coin']").inner_text()
+                        # 热门排行项发布时间
+                        rank_item_time = await video_info.locator("//span[@class='time']").inner_text()
+                        # 热门排行项播放次数
+                        rank_item_play = await video_info.locator("//span[@class='play']").inner_text()
+                        # 热门排行项弹幕数量
+                        rank_item_danmu = await video_info.locator("//span[@class='danmu']").inner_text()
+                        # 热门排行项收藏数量
+                        rank_item_star = await video_info.locator("//span[@class='star']").inner_text()
+                        # 热门排行项硬币数量
+                        rank_item_coin = await video_info.locator("//span[@class='coin']").inner_text()
+                        # 热门排行项发布人
+                        rank_item_pubman = await video_info.locator("//span[@class='name']").inner_text()
+                        # 热门排行项简介
+                        rank_item_desc = await video_info.locator("//p[@class='txt']").inner_text()
                         
-                        # 装载item
-                        animeItem = BilibiliAnimeItem()
-                        animeItem['block_name'] = block_name
-                        animeItem['rank_hot_time_range'] = block_hot_time_range
-                        animeItem['rank_item_num'] = rank_num
-                        animeItem['rank_item_href'] = rank_href
-                        animeItem['rank_item_detail_title'] = rank_detail_title
-                        animeItem['rank_item_detail_point'] = rank_detail_point
-                        animeItem['rank_item_time'] = time
-                        animeItem['rank_item_play'] = play
-                        animeItem['rank_item_danmu'] = danmu
-                        animeItem['rank_item_star'] = star
-                        animeItem['rank_item_coin'] = coin
-
-                        data_list_result.append(animeItem)
-                                                
-                        logging.info('视频发布时间：{} 视频播放次数：{} 视频弹幕数量：{} 视频收藏数量：{} 视频硬币数量：{}'.format(time, play, danmu, star, coin))
+                        
+                        animeRankItem['rank_item_pubman'] = rank_item_pubman
+                        animeRankItem['rank_item_desc'] = rank_item_desc
+                        animeRankItem['rank_item_time'] = rank_item_time
+                        animeRankItem['rank_item_play'] = rank_item_play
+                        animeRankItem['rank_item_danmu'] = rank_item_danmu
+                        animeRankItem['rank_item_star'] = rank_item_star
+                        animeRankItem['rank_item_coin'] = rank_item_coin
+                
+                    self.bilibili_anime['rank_list'].append(animeRankItem)
                 
                 # 点击热门时间范围
                 await block_item.locator("//div[@class='pgc-rank-dropdown rank-dropdown']").hover()
                 await block_item.locator("//li[@class='dropdown-item' and contains(text(), '一周')]").click()
                 await page.wait_for_load_state("networkidle")
                 
-                # 小类区热门列表时间范围
+                # 小类区热门排行时间范围
                 block_hot_time_range = await block_item.locator("//span[@class='selected']").inner_text()
                 # 小类区热门列表
                 rank_item_list_in_block = await block_item.locator("//li[contains(@class, 'rank-item')]").all()
                 for rank_item in rank_item_list_in_block:
-                    # 热门项序号
-                    rank_num = await rank_item.locator("//i[@class='ri-num']").inner_text()
-                    rank_base_info = rank_item.locator("//a[@class='ri-info-wrap clearfix']")
-                    # 热门视频链接
-                    rank_href = await rank_base_info.get_attribute('href')
-                    rank_detail = rank_base_info.locator("//div[@class='ri-detail']")
-                    # 热门视频标题
-                    rank_detail_title = await rank_detail.locator("//p[@class='ri-title']").inner_text()
-                    # 热门视频综合评分
-                    rank_detail_point = await rank_detail.locator("//p[@class='ri-point']").inner_text()
+                    # 热门排行项序号
+                    rank_item_num = await rank_item.locator("//i[@class='ri-num']").inner_text()
+                    rank_item_base_info = rank_item.locator("//a[@class='ri-info-wrap clearfix']")
+                    # 热门排行项视频链接
+                    rank_item_href = await rank_item_base_info.get_attribute('href')
+                    rank_item_detail = rank_item_base_info.locator("//div[@class='ri-detail']")
+                    # 热门排行项视频标题
+                    rank_item_detail_title = await rank_item_detail.locator("//p[@class='ri-title']").inner_text()
+                    # 热门排行项综合评分
+                    rank_item_detail_point = await rank_item_detail.locator("//p[@class='ri-point']").inner_text()
                     
-                    logging.info('小类区名称：{} 小类区热门时间范围：{} 热门排行：{} 热门项链接：{} 热门项标题：{} 热门项评分：{}'.format(block_name, block_hot_time_range, rank_num, rank_href, rank_detail_title, rank_detail_point))
+                    animeRankItem = BilibiliRankItem()
+                    animeRankItem['block_name'] = block_name
+                    animeRankItem['rank_hot_time_range'] = block_hot_time_range
+                    animeRankItem['rank_item_num'] = rank_item_num
+                    animeRankItem['rank_item_href'] = rank_item_href
+                    animeRankItem['rank_item_detail_title'] = rank_item_detail_title
+                    animeRankItem['rank_item_detail_point'] = rank_item_detail_point
                     
                     if block_name != '完结动画':
                         await rank_item.hover()
                         await page.wait_for_timeout(500)
                         video_info = page.locator("//div[@class='video-info-module']")
-                        # 视频发布时间
-                        time = await video_info.locator("//span[@class='time']").inner_text()
-                        # 视频播放次数
-                        play = await video_info.locator("//span[@class='play']").inner_text()
-                        # 视频弹幕数量
-                        danmu = await video_info.locator("//span[@class='danmu']").inner_text()
-                        # 视频收藏数量
-                        star = await video_info.locator("//span[@class='star']").inner_text()
-                        # 视频硬币数量
-                        coin = await video_info.locator("//span[@class='coin']").inner_text()
+                        # 热门排行项发布时间
+                        rank_item_time = await video_info.locator("//span[@class='time']").inner_text()
+                        # 热门排行项播放次数
+                        rank_item_play = await video_info.locator("//span[@class='play']").inner_text()
+                        # 热门排行项弹幕数量
+                        rank_item_danmu = await video_info.locator("//span[@class='danmu']").inner_text()
+                        # 热门排行项收藏数量
+                        rank_item_star = await video_info.locator("//span[@class='star']").inner_text()
+                        # 热门排行项硬币数量
+                        rank_item_coin = await video_info.locator("//span[@class='coin']").inner_text()
+                        # 热门排行项发布人
+                        rank_item_pubman = await video_info.locator("//span[@class='name']").inner_text()
+                        # 热门排行项简介
+                        rank_item_desc = await video_info.locator("//p[@class='txt']").inner_text()
                         
-                        # 装载item
-                        animeItem = BilibiliAnimeItem()
-                        animeItem['block_name'] = block_name
-                        animeItem['rank_hot_time_range'] = block_hot_time_range
-                        animeItem['rank_item_num'] = rank_num
-                        animeItem['rank_item_href'] = rank_href
-                        animeItem['rank_item_detail_title'] = rank_detail_title
-                        animeItem['rank_item_detail_point'] = rank_detail_point
-                        animeItem['rank_item_time'] = time
-                        animeItem['rank_item_play'] = play
-                        animeItem['rank_item_danmu'] = danmu
-                        animeItem['rank_item_star'] = star
-                        animeItem['rank_item_coin'] = coin
+                        
+                        animeRankItem['rank_item_pubman'] = rank_item_pubman
+                        animeRankItem['rank_item_desc'] = rank_item_desc
+                        animeRankItem['rank_item_time'] = rank_item_time
+                        animeRankItem['rank_item_play'] = rank_item_play
+                        animeRankItem['rank_item_danmu'] = rank_item_danmu
+                        animeRankItem['rank_item_star'] = rank_item_star
+                        animeRankItem['rank_item_coin'] = rank_item_coin            
 
-                        data_list_result.append(animeItem)
+                    self.bilibili_anime['rank_list'].append(animeRankItem)
 
-                        logging.info('视频发布时间：{} 视频播放次数：{} 视频弹幕数量：{} 视频收藏数量：{} 视频硬币数量：{}'.format(time, play, danmu, star, coin))
-            
-            result['channel_type'] = self.channel_name
-            result['data_list'] = data_list_result
-            
         await page.close()
-        yield result
+        
+        # 产生日志
+        for animeRankItem in self.bilibili_anime['rank_list']:
+            logging.info('{}频道{}区域{}热门排行：{}：{} {} {}'.format(self.channel_name, 
+                                                     animeRankItem['block_name'], 
+                                                     animeRankItem['rank_hot_time_range'],
+                                                     animeRankItem['rank_item_num'], 
+                                                     animeRankItem['rank_item_detail_title'], 
+                                                     animeRankItem['rank_item_detail_point'], 
+                                                     animeRankItem['rank_item_desc']))
+            logging.info('发布时间{} 播放次数{} 弹幕量{} 收藏数{} 硬币数{} 发布人{}'.format(animeRankItem['rank_item_time'], 
+                                                     animeRankItem['rank_item_play'], 
+                                                     animeRankItem['rank_item_danmu'],
+                                                     animeRankItem['rank_item_star'], 
+                                                     animeRankItem['rank_item_coin'], 
+                                                     animeRankItem['rank_item_pubman']))
+            
+        yield self.result
 
     async def err_anime_callback(self, failure):
         page = failure.request.meta["playwright_page"]
