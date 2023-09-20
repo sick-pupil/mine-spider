@@ -60,11 +60,6 @@ with sync_playwright() as p:
         "Opera/9.80 (Windows NT 6.0) Presto/2.12.388 Version/12.14",
         "Mozilla/5.0 (Windows NT 6.0; rv:2.0) Gecko/20100101 Firefox/4.0 Opera 12.14",
         "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0) Opera 12.14",
-        "Opera/12.80 (Windows NT 5.1; U; en) Presto/2.10.289 Version/12.02",
-        "Opera/9.80 (Windows NT 6.1; U; es-ES) Presto/2.9.181 Version/12.00",
-        "Opera/9.80 (Windows NT 5.1; U; zh-sg) Presto/2.9.181 Version/12.00",
-        "Opera/12.0(Windows NT 5.2;U;en)Presto/22.9.168 Version/12.00",
-        "Opera/12.0(Windows NT 5.1;U;en)Presto/22.9.168 Version/12.00",
         "Mozilla/5.0 (Windows NT 5.1) Gecko/20100101 Firefox/14.0 Opera/12.0",
         "Opera/9.80 (Windows NT 6.1; WOW64; U; pt) Presto/2.10.229 Version/11.62",
         "Opera/9.80 (Windows NT 6.0; U; pl) Presto/2.10.229 Version/11.62",
@@ -81,31 +76,7 @@ with sync_playwright() as p:
         "Opera/9.80 (Windows NT 6.0; U; en) Presto/2.8.99 Version/11.10",
         "Opera/9.80 (Windows NT 5.1; U; zh-tw) Presto/2.8.131 Version/11.10",
         "Opera/9.80 (Windows NT 6.1; Opera Tablet/15165; U; en) Presto/2.8.149 Version/11.1",
-        "Opera/9.80 (X11; Linux x86_64; U; Ubuntu/10.10 (maverick); pl) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (X11; Linux i686; U; ja) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (X11; Linux i686; U; fr) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 6.1; U; zh-tw) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 6.1; U; zh-cn) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 6.1; U; sv) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 6.1; U; en-US) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 6.1; U; cs) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 6.0; U; pl) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 5.2; U; ru) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 5.1; U;) Presto/2.7.62 Version/11.01",
-        "Opera/9.80 (Windows NT 5.1; U; cs) Presto/2.7.62 Version/11.01",
-        "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.13) Gecko/20101213 Opera/9.80 (Windows NT 6.1; U; zh-tw) Presto/2.7.62 Version/11.01",
-        "Mozilla/5.0 (Windows NT 6.1; U; nl; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 11.01",
-        "Mozilla/5.0 (Windows NT 6.1; U; de; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 11.01",
-        "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; de) Opera 11.01",
-        "Opera/9.80 (X11; Linux x86_64; U; pl) Presto/2.7.62 Version/11.00",
-        "Opera/9.80 (X11; Linux i686; U; it) Presto/2.7.62 Version/11.00",
-        "Opera/9.80 (Windows NT 6.1; U; zh-cn) Presto/2.6.37 Version/11.00",
-        "Opera/9.80 (Windows NT 6.1; U; pl) Presto/2.7.62 Version/11.00",
-        "Opera/9.80 (Windows NT 6.1; U; ko) Presto/2.7.62 Version/11.00",
-        "Opera/9.80 (Windows NT 6.1; U; fi) Presto/2.7.62 Version/11.00",
-        "Opera/9.80 (Windows NT 6.1; U; en-GB) Presto/2.7.62 Version/11.00",
-        "Opera/9.80 (Windows NT 6.1 x64; U; en) Presto/2.7.62 Version/11.00",
-        "Opera/9.80 (Windows NT 6.0; U; en) Presto/2.7.39 Version/11.00",
+        
         
         "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1",
         "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
@@ -250,7 +221,6 @@ with sync_playwright() as p:
         "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_6; fr-ch) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4",
         "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; de-de) AppleWebKit/534.15+ (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4",
         "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_5; ar) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4",
-        "Mozilla/5.0 (Android 2.2; Windows; U; Windows NT 6.1; en-US) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4",
         "Mozilla/5.0 (Windows; U; Windows NT 6.1; zh-HK) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5",
         "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5",
         "Mozilla/5.0 (Windows; U; Windows NT 6.0; tr-TR) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5",
@@ -266,22 +236,19 @@ with sync_playwright() as p:
             'user-agent': useragent
         })
         page.goto("https://www.bilibili.com/video/BV1Z94y1H7MN/?from_spmid=666.4.0.0")
-        page.locator(selector = "//div[@class='tag-panel']").scroll_into_view_if_needed()
-        page.wait_for_load_state('networkidle')
-        page.wait_for_timeout(5000)
-        page.locator(selector = "//div[@id='comment']").scroll_into_view_if_needed()
+        if page.locator(selector = "//div[@class='rec-footer']").count() != 0:
+            page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
         page.wait_for_load_state('networkidle')
         
-        if page.locator(selector = "//div[@class='list-item']").count() != 0:
-            page.locator(selector = "//div[@class='list-item']").scroll_into_view_if_needed()
-        if page.locator(selector = "//div[@class='reply-item']").count() != 0:
-            page.locator(selector = "//div[@class='reply-item']").scroll_into_view_if_needed()
+        while page.locator(selector = "//div[contains(@class, 'list-item')]").count() == 0 and page.locator(selector = "//div[contains(@class, 'reply-item')]").count() == 0:
+            page.wait_for_timeout(500)
+            page.wait_for_load_state('networkidle')
         
-        if '登录后查看 616 条评论' in page.content():
-            continue
+        if '登录后查看' in page.content():
+            print('{} {}'.format(useragent, 'error'))
         else:
-            print(useragent)
+            print('{} {}'.format(useragent, 'success'))
         
-        
+        #page.pause()
     page.close()
     browser.close()
