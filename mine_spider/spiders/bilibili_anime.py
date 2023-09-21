@@ -25,7 +25,6 @@ class BilibiliAnimeSpider(Spider):
         },
         'DOWNLOADER_MIDDLEWARES': {
             'mine_spider.middlewares.MineSpiderDownloaderMiddleware': 900,
-            'mine_spider.middlewares.BilibiliAnimeVideoDownloaderMiddleware': 910,
         }
     }
 
