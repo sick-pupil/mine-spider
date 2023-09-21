@@ -322,28 +322,36 @@ class BilibiliAnimeSpider(Spider):
             # 开始解析
             pass
             
-            # 取番剧区的每个小类区            
+            # 取番剧区的每个小类区
             block_list = await page.locator(selector = "//div[@class='block-area block-bangumi']", has = page.locator(selector = "//h4[@class='name']")).all()
             
             for block_item in block_list:
+                block_item_selector = Selector(text = await block_item.inner_html())
                 # 小类区名称
-                block_name = await block_item.locator("//h4[@class='name']").inner_text()
+                # block_name = await block_item.locator("//h4[@class='name']").inner_text()
+                block_name = block_item_selector.xpath(query = "//h4[@class='name']/text()").extract_first()
                 # 小类区热门排行时间范围
-                block_hot_time_range = await block_item.locator("//span[@class='selected']").inner_text()
+                # block_hot_time_range = await block_item.locator("//span[@class='selected']").inner_text()
+                block_hot_time_range = block_item_selector.xpath(query = "//span[@class='selected']/text()").extract_first()
                 # 小类区热门列表
                 rank_item_list_in_block = await block_item.locator("//li[contains(@class, 'rank-item')]").all()
                                 
                 for rank_item in rank_item_list_in_block:
+                    rank_item_selector = Selector(text = await rank_item.inner_html())
                     # 热门排行项序号
-                    rank_item_num = await rank_item.locator("//i[@class='ri-num']").inner_text()
-                    rank_item_base_info = rank_item.locator("//a[@class='ri-info-wrap clearfix']")
+                    # rank_item_num = await rank_item.locator("//i[@class='ri-num']").inner_text()
+                    rank_item_num = rank_item_selector.xpath(query = "//i[@class='ri-num']/text()").extract_first()
+                    # rank_item_base_info = rank_item.locator("//a[@class='ri-info-wrap clearfix']")
                     # 热门排行项视频链接
-                    rank_item_href = await rank_item_base_info.get_attribute('href')
-                    rank_item_detail = rank_item_base_info.locator("//div[@class='ri-detail']")
+                    # rank_item_href = await rank_item_base_info.get_attribute('href')
+                    # rank_item_detail = rank_item_base_info.locator("//div[@class='ri-detail']")
+                    rank_item_href = rank_item_selector.xpath(query = "//a[@class='ri-info-wrap clearfix']/@href")
                     # 热门排行项视频标题
-                    rank_item_detail_title = await rank_item_detail.locator("//p[@class='ri-title']").inner_text()
+                    # rank_item_detail_title = await rank_item_detail.locator("//p[@class='ri-title']").inner_text()
+                    rank_item_detail_title = rank_item_selector.xpath(query = "//a[@class='ri-info-wrap clearfix']/div[@class='ri-title']/p[@class='ri-title']/text()").extract_first()
                     # 热门排行项综合评分
-                    rank_item_detail_point = await rank_item_detail.locator("//p[@class='ri-point']").inner_text()
+                    # rank_item_detail_point = await rank_item_detail.locator("//p[@class='ri-point']").inner_text()
+                    rank_item_detail_point = rank_item_selector.xpath(query = "//a[@class='ri-info-wrap clearfix']/div[@class='ri-title']/p[@class='ri-point']/text()").extract_first()
                     
                     animeRankItem = BilibiliRankItem()
                     animeRankItem['block_name'] = block_name
@@ -356,21 +364,30 @@ class BilibiliAnimeSpider(Spider):
                     if block_name != '完结动画':
                         await rank_item.hover()
                         await page.wait_for_timeout(500)
-                        video_info = page.locator("//div[@class='video-info-module']")
+                        #video_info = page.locator("//div[@class='video-info-module']")
+                        video_info_html = await page.locator("//div[@class='video-info-module']").inner_html()
+                        video_info_selector = Selector(text = video_info_html)
                         # 热门排行项发布时间
-                        rank_item_time = await video_info.locator("//span[@class='time']").inner_text()
+                        # rank_item_time = await video_info.locator("//span[@class='time']").inner_text()
+                        rank_item_time = video_info_selector.xpath(query = "//span[@class='time']/text()").extract_first()
                         # 热门排行项播放次数
-                        rank_item_play = await video_info.locator("//span[@class='play']").inner_text()
+                        # rank_item_play = await video_info.locator("//span[@class='play']").inner_text()
+                        rank_item_play = video_info_selector.xpath(query = "//span[@class='play']/text()").extract_first()
                         # 热门排行项弹幕数量
-                        rank_item_danmu = await video_info.locator("//span[@class='danmu']").inner_text()
+                        # rank_item_danmu = await video_info.locator("//span[@class='danmu']").inner_text()
+                        rank_item_danmu = video_info_selector.xpath(query = "//span[@class='danmu']/text()").extract_first()
                         # 热门排行项收藏数量
-                        rank_item_star = await video_info.locator("//span[@class='star']").inner_text()
+                        # rank_item_star = await video_info.locator("//span[@class='star']").inner_text()
+                        rank_item_star = video_info_selector.xpath(query = "//span[@class='star']/text()").extract_first()
                         # 热门排行项硬币数量
-                        rank_item_coin = await video_info.locator("//span[@class='coin']").inner_text()
+                        # rank_item_coin = await video_info.locator("//span[@class='coin']").inner_text()
+                        rank_item_coin = video_info_selector.xpath(query = "//span[@class='coin']/text()").extract_first()
                         # 热门排行项发布人
-                        rank_item_pubman = await video_info.locator("//span[@class='name']").inner_text()
+                        # rank_item_pubman = await video_info.locator("//span[@class='name']").inner_text()
+                        rank_item_pubman = video_info_selector.xpath(query = "//span[@class='name']/text()").extract_first()
                         # 热门排行项简介
-                        rank_item_desc = await video_info.locator("//p[@class='txt']").inner_text()
+                        # rank_item_desc = await video_info.locator("//p[@class='txt']").inner_text()
+                        rank_item_desc = video_info_selector.xpath(query = "//p[@class='txt']/text()").extract_first()
 
                         animeRankItem['rank_item_pubman'] = rank_item_pubman
                         animeRankItem['rank_item_desc'] = rank_item_desc
@@ -390,43 +407,50 @@ class BilibiliAnimeSpider(Spider):
                     
                     self.bilibili_anime['rank_list'].append(animeRankItem)
                     
-                    yield Request(url = rank_item_href, 
-                        meta = {
-                            'playwright': True, 
-                            'playwright_context': 'bilibili-anime', 
-                            'playwright_context_kwargs': {
-                                'ignore_https_errors': True,
-                             },
-                            'playwright_page_goto_kwargs': {
-                                'wait_until': 'load',
-                            },
-                            'playwright_include_page': True,
-                        }, 
-                        callback = self.anime_video_parse,
-                        errback = self.err_anime_callback,
-                        dont_filter = True,
-                    )
+                    #yield Request(url = rank_item_href, 
+                    #    meta = {
+                    #        'playwright': True, 
+                    #        'playwright_context': 'bilibili-anime', 
+                    #        'playwright_context_kwargs': {
+                    #            'ignore_https_errors': True,
+                    #         },
+                    #        'playwright_page_goto_kwargs': {
+                    #            'wait_until': 'load',
+                    #        },
+                    #        'playwright_include_page': True,
+                    #    }, 
+                    #    callback = self.anime_video_parse,
+                    #    errback = self.err_anime_callback,
+                    #    dont_filter = True,
+                    #)
                 
                 # 点击热门时间范围
                 await block_item.locator("//div[@class='pgc-rank-dropdown rank-dropdown']").hover()
                 await block_item.locator("//li[@class='dropdown-item' and contains(text(), '一周')]").click()
                 await page.wait_for_load_state("networkidle")
+                block_item_selector = Selector(text = await block_item.inner_html())
                 
                 # 小类区热门排行时间范围
-                block_hot_time_range = await block_item.locator("//span[@class='selected']").inner_text()
+                # block_hot_time_range = await block_item.locator("//span[@class='selected']").inner_text()
+                block_hot_time_range = block_item_selector.xpath(query = "//span[@class='selected']/text()").extract_first()
                 # 小类区热门列表
                 rank_item_list_in_block = await block_item.locator("//li[contains(@class, 'rank-item')]").all()
                 for rank_item in rank_item_list_in_block:
+                    rank_item_selector = Selector(text = await rank_item.inner_html())
                     # 热门排行项序号
-                    rank_item_num = await rank_item.locator("//i[@class='ri-num']").inner_text()
-                    rank_item_base_info = rank_item.locator("//a[@class='ri-info-wrap clearfix']")
+                    # rank_item_num = await rank_item.locator("//i[@class='ri-num']").inner_text()
+                    rank_item_num = rank_item_selector.xpath(query = "//i[@class='ri-num']/text()").extract_first()
+                    # rank_item_base_info = rank_item.locator("//a[@class='ri-info-wrap clearfix']")
                     # 热门排行项视频链接
-                    rank_item_href = await rank_item_base_info.get_attribute('href')
-                    rank_item_detail = rank_item_base_info.locator("//div[@class='ri-detail']")
+                    # rank_item_href = await rank_item_base_info.get_attribute('href')
+                    rank_item_href = rank_item_selector.xpath(query = "//a[@class='ri-info-wrap clearfix']/@href")
+                    # rank_item_detail = rank_item_base_info.locator("//div[@class='ri-detail']")
                     # 热门排行项视频标题
-                    rank_item_detail_title = await rank_item_detail.locator("//p[@class='ri-title']").inner_text()
+                    # rank_item_detail_title = await rank_item_detail.locator("//p[@class='ri-title']").inner_text()
+                    rank_item_detail_title = rank_item_selector.xpath(query = "//a[@class='ri-info-wrap clearfix']/div[@class='ri-title']/p[@class='ri-title']/text()").extract_first()
                     # 热门排行项综合评分
-                    rank_item_detail_point = await rank_item_detail.locator("//p[@class='ri-point']").inner_text()
+                    # rank_item_detail_point = await rank_item_detail.locator("//p[@class='ri-point']").inner_text()
+                    rank_item_detail_point = rank_item_selector.xpath(query = "//a[@class='ri-info-wrap clearfix']/div[@class='ri-title']/p[@class='ri-point']/text()").extract_first()
                     
                     animeRankItem = BilibiliRankItem()
                     animeRankItem['block_name'] = block_name
@@ -439,21 +463,30 @@ class BilibiliAnimeSpider(Spider):
                     if block_name != '完结动画':
                         await rank_item.hover()
                         await page.wait_for_timeout(500)
-                        video_info = page.locator("//div[@class='video-info-module']")
+                        # video_info = page.locator("//div[@class='video-info-module']")
+                        video_info_html = await page.locator("//div[@class='video-info-module']").inner_html()
+                        video_info_selector = Selector(text = video_info_html)
                         # 热门排行项发布时间
-                        rank_item_time = await video_info.locator("//span[@class='time']").inner_text()
+                        # rank_item_time = await video_info.locator("//span[@class='time']").inner_text()
+                        rank_item_time = video_info_selector.xpath(query = "//span[@class='time']/text()").extract_first()
                         # 热门排行项播放次数
-                        rank_item_play = await video_info.locator("//span[@class='play']").inner_text()
+                        # rank_item_play = await video_info.locator("//span[@class='play']").inner_text()
+                        rank_item_time = video_info_selector.xpath(query = "//span[@class='play']/text()").extract_first()
                         # 热门排行项弹幕数量
-                        rank_item_danmu = await video_info.locator("//span[@class='danmu']").inner_text()
+                        # rank_item_danmu = await video_info.locator("//span[@class='danmu']").inner_text()
+                        rank_item_time = video_info_selector.xpath(query = "//span[@class='danmu']/text()").extract_first()
                         # 热门排行项收藏数量
-                        rank_item_star = await video_info.locator("//span[@class='star']").inner_text()
+                        # rank_item_star = await video_info.locator("//span[@class='star']").inner_text()
+                        rank_item_time = video_info_selector.xpath(query = "//span[@class='star']/text()").extract_first()
                         # 热门排行项硬币数量
-                        rank_item_coin = await video_info.locator("//span[@class='coin']").inner_text()
+                        # rank_item_coin = await video_info.locator("//span[@class='coin']").inner_text()
+                        rank_item_time = video_info_selector.xpath(query = "//span[@class='coin']/text()").extract_first()
                         # 热门排行项发布人
-                        rank_item_pubman = await video_info.locator("//span[@class='name']").inner_text()
+                        # rank_item_pubman = await video_info.locator("//span[@class='name']").inner_text()
+                        rank_item_time = video_info_selector.xpath(query = "//span[@class='name']/text()").extract_first()
                         # 热门排行项简介
-                        rank_item_desc = await video_info.locator("//p[@class='txt']").inner_text()
+                        # rank_item_desc = await video_info.locator("//p[@class='txt']").inner_text()
+                        rank_item_time = video_info_selector.xpath(query = "//p[@class='txt']/text()").extract_first()
                         
                         animeRankItem['rank_item_pubman'] = rank_item_pubman
                         animeRankItem['rank_item_desc'] = rank_item_desc
@@ -473,22 +506,22 @@ class BilibiliAnimeSpider(Spider):
 
                     self.bilibili_anime['rank_list'].append(animeRankItem)
                     
-                    yield Request(url = rank_item_href, 
-                        meta = {
-                            'playwright': True, 
-                            'playwright_context': 'bilibili-anime', 
-                            'playwright_context_kwargs': {
-                                'ignore_https_errors': True,
-                             },
-                            'playwright_page_goto_kwargs': {
-                                'wait_until': 'load',
-                            },
-                            'playwright_include_page': True,
-                        }, 
-                        callback = self.anime_video_parse,
-                        errback = self.err_anime_callback,
-                        dont_filter = True,
-                    )
+                    #yield Request(url = rank_item_href, 
+                    #    meta = {
+                    #        'playwright': True, 
+                    #        'playwright_context': 'bilibili-anime', 
+                    #        'playwright_context_kwargs': {
+                    #            'ignore_https_errors': True,
+                    #         },
+                    #        'playwright_page_goto_kwargs': {
+                    #            'wait_until': 'load',
+                    #        },
+                    #        'playwright_include_page': True,
+                    #    }, 
+                    #    callback = self.anime_video_parse,
+                    #    errback = self.err_anime_callback,
+                    #    dont_filter = True,
+                    #)
 
         await page.close()
         
