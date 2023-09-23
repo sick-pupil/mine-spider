@@ -1,11 +1,12 @@
 from playwright.sync_api import sync_playwright
+import random
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless = False)
+    browser = p.firefox.launch(headless = True)
     page = browser.new_page()
     
     useragent_list = [
-        "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
+        # "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.1 Safari/537.36",
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36",
         "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36",
@@ -231,24 +232,93 @@ with sync_playwright() as p:
         "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_8; zh-cn) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5",
     ]
     
-    for useragent in useragent_list:
-        page.set_extra_http_headers({
-            'user-agent': useragent
-        })
-        page.goto("https://www.bilibili.com/video/BV1Z94y1H7MN/?from_spmid=666.4.0.0")
-        if page.locator(selector = "//div[@class='rec-footer']").count() != 0:
-            page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
-        page.wait_for_load_state('networkidle')
-        
-        while page.locator(selector = "//div[contains(@class, 'list-item')]").count() == 0 and page.locator(selector = "//div[contains(@class, 'reply-item')]").count() == 0:
-            page.wait_for_timeout(500)
-            page.wait_for_load_state('networkidle')
-        
-        if '登录后查看' in page.content():
-            print('{} {}'.format(useragent, 'error'))
-        else:
-            print('{} {}'.format(useragent, 'success'))
+    #for useragent in useragent_list:
+    #    page.set_extra_http_headers({
+    #        'user-agent': useragent
+    #    })
+    #    page.goto("https://www.bilibili.com/video/BV1Z94y1H7MN/?from_spmid=666.4.0.0")
+    #    if page.locator(selector = "//div[@class='rec-footer']").count() != 0:
+    #        page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
+    #    page.wait_for_load_state('networkidle')
+    #    
+    #    while page.locator(selector = "//div[contains(@class, 'list-item')]").count() == 0 and page.locator(selector = "//div[contains(@class, 'reply-item')]").count() == 0:
+    #        page.wait_for_timeout(500)
+    #        page.wait_for_load_state('networkidle')
+    #    
+    #    if '登录后查看' in page.content():
+    #        print('{} {}'.format(useragent, 'error'))
+    #    else:
+    #        print('{} {}'.format(useragent, 'success'))
         
         #page.pause()
+        
+    page.goto("https://www.bilibili.com/video/BV1qh4y1D7Yq")
+    page.wait_for_load_state('networkidle')
+    
+    while page.locator("//div[@class='bui-collapse-header']").count() == 0:
+        page.wait_for_timeout(500)
+        page.wait_for_load_state('networkidle')
+    
+    
+    page.locator("//div[@class='bui-collapse-header']").click()
+    while page.locator("//li[@class='bui-long-list-item']").count() == 0:
+        page.wait_for_timeout(500)
+        page.wait_for_load_state('networkidle')
+    
+    for dammu_item in page.locator("//li[@class='bui-long-list-item']").all():
+        print('时间: {}, 弹幕内容: {}, 发送时间: {}'.format(dammu_item.locator("//span[@class='dm-info-time']").inner_text(), 
+                                                  dammu_item.locator("//span[@class='dm-info-dm']").inner_text(), 
+                                                  dammu_item.locator("//span[@class='dm-info-date']").inner_text()))
+    
+    print('视频标题 : {}'.format(page.locator("//div[@id='viewbox_report']/h1[@class='video-title']").inner_text()))
+    video_info_detail = page.locator("//div[@class='video-info-detail-list']")
+    print('视频播放量 : {}'.format(video_info_detail.locator("//span[@class='view item']").inner_text()))
+    print('视频弹幕量 : {}'.format(video_info_detail.locator("//span[@class='dm item']").inner_text()))
+    print('视频发布时间 : {}'.format(video_info_detail.locator("//span[@class='pubdate-ip item']").inner_text()))
+    
+    up_info = page.locator("//div[@class='up-info-container']")
+    print('up主个人空间链接 : {}'.format(up_info.locator("//div[@class='up-info--left']/descendant::a[@class='up-avatar']").get_attribute('href')))
+    print('up主名称 : {}'.format(up_info.locator("//div[@class='up-info--right']/descendant::a[@class='up-name is_vip']").inner_text()))
+    print('up主简介 : {}'.format(up_info.locator("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']").inner_text()))
+    print('up主已关注数量 : {}'.format(up_info.locator("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']").inner_text()))
+    
+    video_toolbar = page.locator("//div[@class='video-toolbar-left']")
+    print('视频点赞量 : {}'.format(video_toolbar.locator("//span[@class='video-like-info video-toolbar-item-text']").inner_text()))
+    print('视频投币量 : {}'.format(video_toolbar.locator("//span[@class='video-coin-info video-toolbar-item-text']").inner_text()))
+    print('视频收藏量 : {}'.format(video_toolbar.locator("//span[@class='video-fav-info video-toolbar-item-text']").inner_text()))
+    print('视频转发量 : {}'.format(video_toolbar.locator("//span[@class='video-share-info-text']").inner_text()))
+    
+    under_video_container = page.locator("//div[@class='left-container-under-player']")
+    print('视频简介 : {}'.format(under_video_container.locator("//span[@class='desc-info-text']").inner_text()))
+    
+    for tag in under_video_container.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']").all():
+        print('视频标签 : {}'.format(tag.inner_text()))
+    for tag in under_video_container.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']").all():
+        print('视频标签 : {}'.format(tag.inner_text()))
+    for tag in under_video_container.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']").all():
+        print('视频标签 : {}'.format(tag.inner_text()))
+        
+    page.close()
+    
+    page = browser.new_page()
+    ua = random.choice(useragent_list)
+    page.set_extra_http_headers({
+        'user-agent': ua
+    })
+    
+    page.goto("https://www.bilibili.com/video/BV1qh4y1D7Yq")
+    page.wait_for_load_state('networkidle')
+    if page.locator(selector = "//div[@class='rec-footer']").count() != 0:
+        page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
+    page.wait_for_load_state('networkidle')
+    
+    while page.locator(selector = "//div[@class='comment-list ']/div[@class='list-item reply-wrap ']").count() == 0:
+        page.wait_for_timeout(500)
+        page.wait_for_load_state('networkidle')
+    for list_item in page.locator(selector = "//div[contains(@class, 'list-item reply-wrap')]").all():
+        print('评论内容 : {}'.format(list_item.locator("//div[@class='con ']/p[@class='text']").inner_text()))
+        print('评论时间 : {}'.format(list_item.locator("//div[@class='con ']/div[@class='info']/span[@class='time-location']/span[@class='reply-time']").inner_text()))
+        print('评论被点赞数 : {}'.format(list_item.locator("//div[@class='con ']/div[@class='info']/span[@class='like ']/span").inner_text()))
+        
     page.close()
     browser.close()
