@@ -20,7 +20,7 @@ BOT_NAME = "mine_spider"
 SPIDER_MODULES = ["mine_spider.spiders"]
 NEWSPIDER_MODULE = "mine_spider.spiders"
 
-ua_list = [
+UA_LIST = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.3",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
@@ -133,7 +133,7 @@ ROBOTSTXT_OBEY = False
 DEFAULT_REQUEST_HEADERS = {
 #    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 #    "Accept-Language": "en",
-    "User-Agent": random.choice(ua_list),
+    "User-Agent": random.choice(UA_LIST),
 }
 
 # Enable or disable spider middlewares

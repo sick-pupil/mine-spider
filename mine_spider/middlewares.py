@@ -7,6 +7,8 @@ from scrapy import signals
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
+import random
+from scrapy.utils.project import get_project_settings
 
 
 class MineSpiderSpiderMiddleware:
@@ -78,7 +80,7 @@ class MineSpiderDownloaderMiddleware:
         # - or return a Request object
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
-        # request.headers['User-Agent'] = fake_useragent.UserAgent().random
+        request.headers['User-Agent'] = random.choice(spider.settings.get('UA_LIST'))
         return None
 
     def process_response(self, request, response, spider):
