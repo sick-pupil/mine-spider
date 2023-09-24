@@ -2,7 +2,7 @@ from playwright.sync_api import sync_playwright
 import random
 
 with sync_playwright() as p:
-    browser = p.firefox.launch(headless = True)
+    browser = p.firefox.launch(headless = False)
     page = browser.new_page()
     
     useragent_list = [
@@ -231,39 +231,17 @@ with sync_playwright() as p:
         "Mozilla/5.0 (Windows; U; Windows NT 5.1; ru-RU) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5",
         "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_8; zh-cn) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5",
     ]
-    
-    #for useragent in useragent_list:
-    #    page.set_extra_http_headers({
-    #        'user-agent': useragent
-    #    })
-    #    page.goto("https://www.bilibili.com/video/BV1Z94y1H7MN/?from_spmid=666.4.0.0")
-    #    if page.locator(selector = "//div[@class='rec-footer']").count() != 0:
-    #        page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
-    #    page.wait_for_load_state('networkidle')
-    #    
-    #    while page.locator(selector = "//div[contains(@class, 'list-item')]").count() == 0 and page.locator(selector = "//div[contains(@class, 'reply-item')]").count() == 0:
-    #        page.wait_for_timeout(500)
-    #        page.wait_for_load_state('networkidle')
-    #    
-    #    if '登录后查看' in page.content():
-    #        print('{} {}'.format(useragent, 'error'))
-    #    else:
-    #        print('{} {}'.format(useragent, 'success'))
-        
-        #page.pause()
         
     page.goto("https://www.bilibili.com/video/BV1qh4y1D7Yq")
-    page.wait_for_load_state('networkidle')
+    page.wait_for_load_state('load')
     
     while page.locator("//div[@class='bui-collapse-header']").count() == 0:
         page.wait_for_timeout(500)
-        page.wait_for_load_state('networkidle')
     
     
     page.locator("//div[@class='bui-collapse-header']").click()
     while page.locator("//li[@class='bui-long-list-item']").count() == 0:
         page.wait_for_timeout(500)
-        page.wait_for_load_state('networkidle')
     
     for dammu_item in page.locator("//li[@class='bui-long-list-item']").all():
         print('时间: {}, 弹幕内容: {}, 发送时间: {}'.format(dammu_item.locator("//span[@class='dm-info-time']").inner_text(), 
@@ -277,6 +255,7 @@ with sync_playwright() as p:
     print('视频发布时间 : {}'.format(video_info_detail.locator("//span[@class='pubdate-ip item']").inner_text()))
     
     up_info = page.locator("//div[@class='up-info-container']")
+    up_info_link = up_info.locator("//div[@class='up-info--left']/descendant::a[@class='up-avatar']").get_attribute('href')
     print('up主个人空间链接 : {}'.format(up_info.locator("//div[@class='up-info--left']/descendant::a[@class='up-avatar']").get_attribute('href')))
     print('up主名称 : {}'.format(up_info.locator("//div[@class='up-info--right']/descendant::a[@class='up-name is_vip']").inner_text()))
     print('up主简介 : {}'.format(up_info.locator("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']").inner_text()))
@@ -307,18 +286,40 @@ with sync_playwright() as p:
     })
     
     page.goto("https://www.bilibili.com/video/BV1qh4y1D7Yq")
-    page.wait_for_load_state('networkidle')
-    if page.locator(selector = "//div[@class='rec-footer']").count() != 0:
-        page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
-    page.wait_for_load_state('networkidle')
+    page.wait_for_load_state('load')
+    while page.locator(selector = "//div[@class='rec-footer']").count() == 0:
+        page.wait_for_timeout(500)
+    page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
     
     while page.locator(selector = "//div[@class='comment-list ']/div[@class='list-item reply-wrap ']").count() == 0:
         page.wait_for_timeout(500)
-        page.wait_for_load_state('networkidle')
     for list_item in page.locator(selector = "//div[contains(@class, 'list-item reply-wrap')]").all():
         print('评论内容 : {}'.format(list_item.locator("//div[@class='con ']/p[@class='text']").inner_text()))
         print('评论时间 : {}'.format(list_item.locator("//div[@class='con ']/div[@class='info']/span[@class='time-location']/span[@class='reply-time']").inner_text()))
         print('评论被点赞数 : {}'.format(list_item.locator("//div[@class='con ']/div[@class='info']/span[@class='like ']/span").inner_text()))
         
+    page.close()
+    
+    page = browser.new_page()
+    page.goto('https:' + up_info_link)
+    page.wait_for_load_state('networkidle')
+        
+    up_basic_info = page.locator("//div[@class='h-basic']")
+    print('up名称 : {}'.format(up_basic_info.locator("//span[@id='h-name']").inner_text()))
+    print('up简介 : {}'.format(up_basic_info.locator("//div[@class='h-basic-spacing']/h4[@class='h-sign']").inner_text()))
+    
+    up_tab_links = page.locator("//div[@id='navigator']/descendant::div[@class='n-tab-links']")
+    print('up投稿数 : {}'.format(up_tab_links.locator("//a[@class='n-btn n-video n-audio n-article n-album']/span[@class='n-num']").inner_text()))
+    print('up合集数 : {}'.format(up_tab_links.locator("//a[@class='n-btn n-channel']/span[@class='n-num']").inner_text()))
+    
+    up_gz_fs = page.locator("//div[@class='n-statistics']")
+    print('up被关注数 : {}'.format(up_gz_fs.locator("//div[@class='n-data n-gz']/p[@id='n-gz']").inner_text()))
+    print('up粉丝数 : {}'.format(up_gz_fs.locator("//div[@class='n-data n-fs']/p[@id='n-fs']").inner_text()))
+    
+    print('up充电人数 : {}'.format(page.locator("//div[@class='elec-status']/span[@class='elec-count']").inner_text()))
+    print('up UID : {}'.format(page.locator("//div[@class='info-wrap']/span[@class='info-value']").inner_text()))
+    
+    page.pause()
+    
     page.close()
     browser.close()
