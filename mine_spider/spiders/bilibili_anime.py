@@ -8,6 +8,7 @@ Created on Sat Sep 16 19:39:43 2023
 from ..items import Result, BilibiliChannel, BilibiliRankItem, BilibiliVideoDetail, BilibiliVideoDanmu, BilibiliUpInfo
 from scrapy import Spider, Selector, Request
 import logging
+import random
 
 class BilibiliAnimeSpider(Spider):
     
@@ -19,7 +20,7 @@ class BilibiliAnimeSpider(Spider):
         'PLAYWRIGHT_LAUNCH_OPTIONS': {'headless': True, 'timeout': 60 * 1000}, 
         'PLAYWRIGHT_MAX_CONTEXTS': 1,
         'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 60 * 1000,
-        'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 30,
+        'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 50,
         'ITEM_PIPELINES': {
             'mine_spider.pipelines.BilibiliAnimePipeline': 500
         },
@@ -35,6 +36,8 @@ class BilibiliAnimeSpider(Spider):
         self.bilibili_anime['channel_name'] = self.channel_name
         self.bilibili_anime['rank_list'] = list()
         self.result['data'] = self.bilibili_anime
+        
+        self.url_prefix = 'https:'
         
         self.ua_by_get_reply_list = [
             "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
@@ -87,6 +90,7 @@ class BilibiliAnimeSpider(Spider):
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1309.0 Safari/537.17",
             "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.15 (KHTML, like Gecko) Chrome/24.0.1295.0 Safari/537.15",
             "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.14 (KHTML, like Gecko) Chrome/24.0.1292.0 Safari/537.14",
+            
             "Opera/9.80 (X11; Linux i686; Ubuntu/14.10) Presto/2.12.388 Version/12.16",
             "Opera/9.80 (Windows NT 6.0) Presto/2.12.388 Version/12.14",
             "Mozilla/5.0 (Windows NT 6.0; rv:2.0) Gecko/20100101 Firefox/4.0 Opera 12.14",
@@ -107,6 +111,8 @@ class BilibiliAnimeSpider(Spider):
             "Opera/9.80 (Windows NT 6.0; U; en) Presto/2.8.99 Version/11.10",
             "Opera/9.80 (Windows NT 5.1; U; zh-tw) Presto/2.8.131 Version/11.10",
             "Opera/9.80 (Windows NT 6.1; Opera Tablet/15165; U; en) Presto/2.8.149 Version/11.1",
+            
+            
             "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1",
             "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10; rv:33.0) Gecko/20100101 Firefox/33.0",
@@ -157,6 +163,7 @@ class BilibiliAnimeSpider(Spider):
             "Mozilla/5.0 (Windows NT 6.1; rv:14.0) Gecko/20100101 Firefox/18.0.1",
             "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0)  Gecko/20100101 Firefox/18.0",
             "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0.6",
+            
             "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko",
             "Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; Trident/7.0;  rv:11.0) like Gecko",
             "Mozilla/5.0 (compatible; MSIE 10.6; Windows NT 6.1; Trident/5.0; InfoPath.2; SLCC1; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729; .NET CLR 2.0.50727) 3gpp-gba UNTRUSTED/1.0",
@@ -207,6 +214,7 @@ class BilibiliAnimeSpider(Spider):
             "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; InfoPath.3; .NET4.0C; .NET4.0E; .NET CLR 3.5.30729; .NET CLR 3.0.30729; MS-RTC LM 8)",
             "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; InfoPath.2)",
             "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; Zune 3.0)",
+            
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/7046A194A",
             "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2",
@@ -393,22 +401,23 @@ class BilibiliAnimeSpider(Spider):
                     
                     self.bilibili_anime['rank_list'].append(animeRankItem)
                     
-                    #yield Request(url = rank_item_href, 
-                    #    meta = {
-                    #        'playwright': True, 
-                    #        'playwright_context': 'bilibili-anime', 
-                    #        'playwright_context_kwargs': {
-                    #            'ignore_https_errors': True,
-                    #         },
-                    #        'playwright_page_goto_kwargs': {
-                    #            'wait_until': 'load',
-                    #        },
-                    #        'playwright_include_page': True,
-                    #    }, 
-                    #    callback = self.anime_video_parse,
-                    #    errback = self.err_anime_callback,
-                    #    dont_filter = True,
-                    #)
+                    if block_name != '连载动画' and block_name != '完结动画':
+                        yield Request(url = self.url_prefix + rank_item_href, 
+                            meta = {
+                                'playwright': True, 
+                                'playwright_context': 'bilibili-anime', 
+                                'playwright_context_kwargs': {
+                                    'ignore_https_errors': True,
+                                 },
+                                'playwright_page_goto_kwargs': {
+                                    'wait_until': 'load',
+                                },
+                                'playwright_include_page': True,
+                            }, 
+                            callback = self.anime_video_parse,
+                            errback = self.err_anime_callback,
+                            dont_filter = True,
+                        )
                 
                 # 点击热门时间范围
                 await block_item.locator("//div[@class='pgc-rank-dropdown rank-dropdown']").hover()
@@ -480,25 +489,23 @@ class BilibiliAnimeSpider(Spider):
 
                     self.bilibili_anime['rank_list'].append(animeRankItem)
                     
-                    #yield Request(url = rank_item_href, 
-                    #    meta = {
-                    #        'playwright': True, 
-                    #        'playwright_context': 'bilibili-anime', 
-                    #        'playwright_context_kwargs': {
-                    #            'ignore_https_errors': True,
-                    #         },
-                    #        'playwright_page_goto_kwargs': {
-                    #            'wait_until': 'load',
-                    #        },
-                    #        'playwright_include_page': True,
-                    #    }, 
-                    #    callback = self.anime_video_parse,
-                    #    errback = self.err_anime_callback,
-                    #    dont_filter = True,
-                    #)
-        
-        with open(file = '/project/tmp-files/full-page.html', mode = 'w', encoding = 'utf-8') as f:
-            f.write(await page.content())
+                    if block_name != '连载动画' and block_name != '完结动画':
+                        yield Request(url = self.url_prefix + rank_item_href, 
+                            meta = {
+                                'playwright': True, 
+                                'playwright_context': 'bilibili-anime', 
+                                'playwright_context_kwargs': {
+                                    'ignore_https_errors': True,
+                                 },
+                                'playwright_page_goto_kwargs': {
+                                    'wait_until': 'load',
+                                },
+                                'playwright_include_page': True,
+                            }, 
+                            callback = self.anime_video_parse,
+                            errback = self.err_anime_callback,
+                            dont_filter = True,
+                        )
         
         await page.close()
         
@@ -522,7 +529,95 @@ class BilibiliAnimeSpider(Spider):
         yield self.result
     
     async def anime_video_parse(self, response):
-        pass
+        
+        logging.info('请求频道{}，视频链接{}, ua为{}'.format(self.channel_name, response.request.url, response.request.headers['user-agent']))
+        page = response.meta['playwright_page']
+        
+        while await page.locator("//div[@class='bui-collapse-header']").count() == 0:
+            await page.wait_for_timeout(500)
+        
+        
+        await page.locator("//div[@class='bui-collapse-header']").click()
+        while await page.locator("//li[@class='bui-long-list-item']").count() == 0:
+            await page.wait_for_timeout(500)
+        
+        resp = await page.content()
+        selector = Selector(text = resp)
+        
+        for dammu_item in selector.xpath("//li[@class='bui-long-list-item']"):
+            logging.info('时间: {}, 弹幕内容: {}, 发送时间: {}'.format(dammu_item.xpath("//span[@class='dm-info-time']/text()").extract_first(), 
+                                                      dammu_item.xpath("//span[@class='dm-info-dm']/text()").extract_first(), 
+                                                      dammu_item.xpath("//span[@class='dm-info-date']/text()").extract_first()))
+        
+        logging.info('视频标题 : {}'.format(selector.xpath("//div[@id='viewbox_report']/h1[@class='video-title']/text()").extract_first()))
+        video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
+        logging.info('视频播放量 : {}'.format(video_info_detail.xpath("//span[@class='view item']/text()").extract_first()))
+        logging.info('视频弹幕量 : {}'.format(video_info_detail.xpath("//span[@class='dm item']/text()").extract_first()))
+        logging.info('视频发布时间 : {}'.format(video_info_detail.xpath("//span[@class='pubdate-ip item']/text()").extract_first()))
+        
+        up_info = selector.xpath("//div[@class='up-info-container']")
+        logging.info('up主个人空间链接 : {}'.format(up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()))
+        logging.info('up主名称 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::a[@class='up-name is_vip']/text()").extract_first()))
+        logging.info('up主简介 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()))
+        logging.info('up主已关注数量 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first()))
+        
+        video_toolbar = selector.xpath("//div[@class='video-toolbar-left']")
+        logging.info('视频点赞量 : {}'.format(video_toolbar.xpath("//span[@class='video-like-info video-toolbar-item-text']/text()").extract_first()))
+        logging.info('视频投币量 : {}'.format(video_toolbar.xpath("//span[@class='video-coin-info video-toolbar-item-text']/text()").extract_first()))
+        logging.info('视频收藏量 : {}'.format(video_toolbar.xpath("//span[@class='video-fav-info video-toolbar-item-text']/text()").extract_first()))
+        logging.info('视频转发量 : {}'.format(video_toolbar.xpath("//span[@class='video-share-info-text']/text()").extract_first()))
+        
+        under_video_container = selector.xpath("//div[@class='left-container-under-player']")
+        logging.info('视频简介 : {}'.format(under_video_container.xpath("//span[@class='desc-info-text']/text()").extract_first()))
+        
+        for tag in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']/text()"):
+            logging.info('视频标签 : {}'.format(tag.extract_first()))
+        for tag in under_video_container.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']/text()"):
+            logging.info('视频标签 : {}'.format(tag.extract_first()))
+        for tag in under_video_container.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']/text()"):
+            logging.info('视频标签 : {}'.format(tag.extract_first()))
+            
+        await page.close()
+        
+        yield Request(url = self.url_prefix + response.request.url, 
+            headers= {'user-agent' : random.choice(self.ua_by_get_reply_list)},
+            meta = {
+                'playwright': True, 
+                'playwright_context': 'bilibili-anime', 
+                'playwright_context_kwargs': {
+                    'ignore_https_errors': True,
+                },
+                'playwright_page_goto_kwargs': {
+                    'wait_until': 'load',
+                },
+                'playwright_include_page': True,
+            }, 
+            callback = self.anime_comment_parse,
+            errback = self.err_anime_callback,
+            dont_filter = True,
+        )
+
+    async def anime_comment_parse(self, response):
+        
+        logging.info('请求频道{}，视频链接{}, ua为{}'.format(self.channel_name, response.request.url, response.request.headers['user-agent']))
+        page = response.meta['playwright_page']
+        
+        while await page.locator(selector = "//div[@class='rec-footer']").count() == 0:
+            await page.wait_for_timeout(500)
+        await page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
+        
+        while await page.locator(selector = "//div[@class='comment-list ']/div[@class='list-item reply-wrap ']").count() == 0:
+            await page.wait_for_timeout(500)
+            
+        resp = await page.content()
+        selector = Selector(text = resp)
+        
+        for list_item in selector.xpath(selector = "//div[contains(@class, 'list-item reply-wrap')]"):
+            logging.info('评论内容 : {}'.format(list_item.locator("//div[@class='con ']/p[@class='text']/text()").extract_first()))
+            logging.info('评论时间 : {}'.format(list_item.locator("//div[@class='con ']/div[@class='info']/span[@class='time-location']/span[@class='reply-time']/text()").extract_first()))
+            logging.info('评论被点赞数 : {}'.format(list_item.locator("//div[@class='con ']/div[@class='info']/span[@class='like ']/span/text()").extract_first()))
+            
+        await page.close()
 
     async def err_anime_callback(self, failure):
         page = failure.request.meta["playwright_page"]
