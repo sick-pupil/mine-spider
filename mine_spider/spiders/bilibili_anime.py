@@ -10,6 +10,7 @@ from ..settings import UA_LIST as ua_list
 from scrapy import Spider, Selector, Request
 import logging
 import random
+from datetime import datetime
 
 class BilibiliAnimeSpider(Spider):
     
@@ -18,9 +19,9 @@ class BilibiliAnimeSpider(Spider):
     start_url: str = 'https://www.bilibili.com/anime'
     custom_settings: dict = {
         'PLAYWRIGHT_BROWSER_TYPE': 'firefox',
-        'PLAYWRIGHT_LAUNCH_OPTIONS': {'headless': True, 'timeout': 30 * 60 * 1000}, 
+        'PLAYWRIGHT_LAUNCH_OPTIONS': {'headless': True, 'timeout': 0}, 
         'PLAYWRIGHT_MAX_CONTEXTS': 1,
-        'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 30 * 60 * 1000,
+        'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 0,
         'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 30,
         'ITEM_PIPELINES': {
             'mine_spider.pipelines.BilibiliAnimePipeline': 500
@@ -175,10 +176,17 @@ class BilibiliAnimeSpider(Spider):
                     
                     self.bilibili_anime['rank_list'].append(animeRankItem)
                     
-                    if (block_name != '连载动画' and block_name != '完结动画' and
+                    if ((block_name != '连载动画' and block_name != '完结动画') and
                                                                 ('BV1Xz4y1V7F6' in rank_item_href or
-                                                                 'BV1pC4y1Z7kL' in rank_item_href or 
-                                                                 'BV1384y1D7hH' in rank_item_href)):
+                                                                'BV1384y1D7hH' in rank_item_href or 
+                                                                'BV1Rz4y1V7Lz' in rank_item_href or
+                                                                'BV1j84y1D7FX' in rank_item_href or
+                                                                'BV1nz4y1V7kq' in rank_item_href or
+                                                                'BV16K4y1F7VH' in rank_item_href or
+                                                                'BV1pK4y1F7kk' in rank_item_href or
+                                                                'BV1GF411m7n1' in rank_item_href or
+                                                                'BV16u41137yH' in rank_item_href or
+                                                                'BV1U84y1D7U7' in rank_item_href)):
                         pass
                         yield Request(url = self.url_prefix + rank_item_href,
                             meta = {
@@ -189,6 +197,7 @@ class BilibiliAnimeSpider(Spider):
                                  },
                                 'playwright_page_goto_kwargs': {
                                     'wait_until': 'load',
+                                    'timeout': 0
                                 },
                                 'playwright_include_page': True,
                             }, 
@@ -268,121 +277,29 @@ class BilibiliAnimeSpider(Spider):
 
                     self.bilibili_anime['rank_list'].append(animeRankItem)
                     
-                    if (block_name != '连载动画' and block_name != '完结动画' and ('BV1nH4y1m7Y2' in rank_item_href)):
-                        pass
-                        yield Request(url = self.url_prefix + rank_item_href,
-                            meta = {
-                                'playwright': True, 
-                                'playwright_context': 'bilibili-anime', 
-                                'playwright_context_kwargs': {
-                                    'ignore_https_errors': True,
-                                 },
-                                'playwright_page_goto_kwargs': {
-                                    'wait_until': 'load',
-                                },
-                                'playwright_include_page': True,
-                            }, 
-                            callback = self.anime_video_parse,
-                            errback = self.err_anime_callback,
-                            dont_filter = True,
-                        )
+                    #if block_name != '连载动画' and block_name != '完结动画':
+                    #    pass
+                    #    yield Request(url = self.url_prefix + rank_item_href,
+                    #        meta = {
+                    #            'playwright': True, 
+                    #            'playwright_context': 'bilibili-anime', 
+                    #            'playwright_context_kwargs': {
+                    #                'ignore_https_errors': True,
+                    #             },
+                    #            'playwright_page_goto_kwargs': {
+                    #                'wait_until': 'load',
+                    #            },
+                    #            'playwright_include_page': True,
+                    #        }, 
+                    #        callback = self.anime_video_parse,
+                    #        errback = self.err_anime_callback,
+                    #        dont_filter = True,
+                    #    )
                 
         # 产生日志
         for animeRankItem in self.bilibili_anime['rank_list']:
             pass
-            '''
-            await page.set_extra_http_headers({'user-agent' : random.choice(self.settings.get('UA_LIST'))})
-            await page.goto(self.url_prefix + animeRankItem['rank_item_href'])
-            await page.wait_for_load_state('networkidle')
-            
-            while await page.locator("//div[@class='bui-collapse-header']").count() == 0:
-                logging.info('{} {} waiting for bui-collapse-header'.format(response.request.url, response.request.headers['user-agent']))
-                await page.wait_for_load_state('networkidle')
-                await page.wait_for_timeout(1000)
-        
-            await page.locator("//div[@class='bui-collapse-header']").click()
-            await page.wait_for_load_state('networkidle')
-            await page.wait_for_timeout(2000)
-            
-            resp = await page.content()
-            selector = Selector(text = resp)
-            
-            for dammu_item in selector.xpath("//li[@class='bui-long-list-item']"):
-                logging.info('时间: {}, 弹幕内容: {}, 发送时间: {}'.format(dammu_item.xpath(".//span[@class='dm-info-time']/text()").extract_first(), 
-                                                          dammu_item.xpath(".//span[@class='dm-info-dm']/text()").extract_first(), 
-                                                          dammu_item.xpath(".//span[@class='dm-info-date']/text()").extract_first()))
-            
-            logging.info('视频标题 : {}'.format(selector.xpath("//div[@id='viewbox_report']/h1[@class='video-title']/text()").extract_first()))
-            video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
-            logging.info('视频播放量 : {}'.format(video_info_detail.xpath("//span[@class='view item']/text()").extract_first()))
-            logging.info('视频弹幕量 : {}'.format(video_info_detail.xpath("//span[@class='dm item']/text()").extract_first()))
-            logging.info('视频发布时间 : {}'.format(video_info_detail.xpath("//span[@class='pubdate-ip item']/text()").extract_first()))
-            
-            up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
-            up_link = up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()
-            logging.info('up主个人空间链接 : {}'.format(up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()))
-            logging.info('up主名称 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::a[@class='up-name is_vip']/text()").extract_first()))
-            logging.info('up主简介 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()))
-            logging.info('up主已关注数量 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first()))
-            
-            video_toolbar = selector.xpath("//div[@class='video-toolbar-left']")
-            logging.info('视频点赞量 : {}'.format(video_toolbar.xpath("//span[@class='video-like-info video-toolbar-item-text']/text()").extract_first()))
-            logging.info('视频投币量 : {}'.format(video_toolbar.xpath("//span[@class='video-coin-info video-toolbar-item-text']/text()").extract_first()))
-            logging.info('视频收藏量 : {}'.format(video_toolbar.xpath("//span[@class='video-fav-info video-toolbar-item-text']/text()").extract_first()))
-            logging.info('视频转发量 : {}'.format(video_toolbar.xpath("//span[@class='video-share-info-text']/text()").extract_first()))
-            
-            under_video_container = selector.xpath("//div[@class='left-container-under-player']")
-            logging.info('视频简介 : {}'.format(under_video_container.xpath("//span[@class='desc-info-text']/text()").extract_first()))
-            
-            for tag in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']/text()"):
-                logging.info('视频标签 : {}'.format(tag.get()))
-            for tag in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']/text()"):
-                logging.info('视频标签 : {}'.format(tag.get()))
-            for tag in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']/text()"):
-                logging.info('视频标签 : {}'.format(tag.get()))
-            
-            while await page.locator(selector = "//div[@class='rec-footer']").count() == 0:
-                await page.wait_for_load_state('networkidle')
-                await page.wait_for_timeout(1000)
-                logging.info('{} {} waiting for rec-footer'.format(response.request.url, response.request.headers['user-agent']))
-                with open(file="/screenshot-rec-footer.html", mode='w', encoding='utf-8') as f:
-                    f.write(await page.content())
-            await page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
-            await page.wait_for_timeout(1000)
-            
-            while await page.locator(selector = "//div[@class='reply-list']").count() == 0 and await page.locator(selector = "//div[@class='comment-list ']").count() == 0:
-                await page.wait_for_load_state('networkidle')
-                await page.wait_for_timeout(1000)
-                logging.info('{} {} waiting for reply-list or comment-list'.format(response.request.url, response.request.headers['user-agent']))
-                with open(file="/screenshot-reply-comment.html", mode='w', encoding='utf-8') as f:
-                    f.write(await page.content())
-            
-            if await page.locator(selector = "//div[@class='reply-list']").count() != 0:
-                while await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").count() == 0:
-                    await page.wait_for_load_state('networkidle')
-                    await page.wait_for_timeout(1000)
-                    logging.info('{} {} waiting for root-reply'.format(response.request.url, response.request.headers['user-agent']))
-            elif await page.locator(selector = "//div[@class='comment-list ']").count() != 0:
-                while await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").count() == 0:
-                    await page.wait_for_load_state('networkidle')
-                    await page.wait_for_timeout(1000)
-                    logging.info('{} {} waiting for list-item'.format(response.request.url, response.request.headers['user-agent']))
-            
-            resp = await page.content()
-            selector = Selector(text = resp)
-            
-            if selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']") is not None:
-                for list_item in selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']"):
-                    logging.info('评论内容 : {}'.format(list_item.xpath(".//span[@class='reply-content']/text()").extract_first()))
-                    logging.info('评论时间 : {}'.format(list_item.xpath(".//span[@class='reply-time']/text()").extract_first()))
-                    logging.info('评论被点赞数 : {}'.format(list_item.xpath(".//span[@class='reply-like']/span/text()").extract_first()))
-                    
-            elif selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']") is not None:
-                for list_item in selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']"):
-                    logging.info('评论内容 : {}'.format(list_item.xpath(".//p[@class='text']/text()").extract_first()))
-                    logging.info('评论时间 : {}'.format(list_item.xpath(".//div[@class='info']/span[@class='time-location']/span[@class='reply-time']/text()").extract_first()))
-                    logging.info('评论被点赞数 : {}'.format(list_item.xpath(".//div[@class='info']/span[@class='like ']/span/text()").extract_first()))
-            '''
+            logging.info(animeRankItem['rank_item_href'])
             #logging.info('{}频道{}区域{}热门排行：{}：{}\n{}\n链接: {}\n简介: {}'.format(self.channel_name, 
             #                                         animeRankItem['block_name'], 
             #                                         animeRankItem['block_hot_time_range'],
@@ -406,16 +323,20 @@ class BilibiliAnimeSpider(Spider):
         logging.info('获取视频详情, 请求频道{}，视频链接{}, ua为{}'.format(self.channel_name, response.request.url, response.request.headers['user-agent']))
         page = response.meta['playwright_page']
         
+        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")))
+        
         while await page.locator("//div[@class='bui-collapse-header']").count() == 0:
             logging.info('{} {} waiting for bui-collapse-header'.format(response.request.url, response.request.headers['user-agent']))
-            await page.wait_for_load_state('networkidle')
+            await page.wait_for_load_state('load')
             await page.wait_for_timeout(1000)
-            with open(file="/screenshot-bui-collapse-header.html", mode='w', encoding='utf-8') as f:
-                f.write(await page.content())
         
         await page.locator("//div[@class='bui-collapse-header']").click()
-        await page.wait_for_load_state('networkidle')
+        await page.wait_for_load_state('load')
         await page.wait_for_timeout(2000)
+        
+        await page.locator("//video").click()
+        
+        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")))
         
         resp = await page.content()
         selector = Selector(text = resp)
@@ -454,28 +375,51 @@ class BilibiliAnimeSpider(Spider):
         for tag in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']/text()"):
             logging.info('视频标签 : {}'.format(tag.get()))
         
+        await page.evaluate("""
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth',
+            });
+            """
+        )
+        await page.wait_for_timeout(3000)
+        
+        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")))
+        
         while await page.locator(selector = "//div[@class='rec-footer']").count() == 0:
-            await page.wait_for_load_state('networkidle')
+            await page.wait_for_load_state('load')
             await page.wait_for_timeout(1000)
             logging.info('{} {} waiting for rec-footer'.format(response.request.url, response.request.headers['user-agent']))
         await page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
         await page.wait_for_timeout(1000)
         
+        await page.locator(selector = "//div[@class='left-container-under-player']").scroll_into_view_if_needed()
+        while await page.locator(selector = "//div[@class='reply-header']").count() == 0 and await page.locator(selector = "//div[@class='comment-header clearfix']").count() == 0:
+            await page.wait_for_load_state('load')
+            await page.wait_for_timeout(1000)
+            logging.info('{} {} waiting for reply-header'.format(response.request.url, response.request.headers['user-agent']))
+        if await page.locator(selector = "//div[@class='reply-header']").count() != 0:
+            await page.locator(selector = "//div[@class='reply-warp']").scroll_into_view_if_needed()
+            await page.wait_for_timeout(1000)
+        elif await page.locator(selector = "//div[@class='comment-header clearfix']").count() != 0:
+            await page.locator(selector = "//div[@class='comment-list ']").scroll_into_view_if_needed()
+            await page.wait_for_timeout(1000)
+        
+        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")))
+        
         while await page.locator(selector = "//div[@class='reply-list']").count() == 0 and await page.locator(selector = "//div[@class='comment-list ']").count() == 0:
-            await page.wait_for_load_state('networkidle')
+            await page.wait_for_load_state('load')
             await page.wait_for_timeout(1000)
             logging.info('{} {} waiting for reply-list or comment-list'.format(response.request.url, response.request.headers['user-agent']))
-            with open(file="/screenshot-reply-comment.html", mode='w', encoding='utf-8') as f:
-                f.write(await page.content())
         
         if await page.locator(selector = "//div[@class='reply-list']").count() != 0:
             while await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").count() == 0:
-                await page.wait_for_load_state('networkidle')
+                await page.wait_for_load_state('load')
                 await page.wait_for_timeout(1000)
                 logging.info('{} {} waiting for root-reply'.format(response.request.url, response.request.headers['user-agent']))
         elif await page.locator(selector = "//div[@class='comment-list ']").count() != 0:
             while await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").count() == 0:
-                await page.wait_for_load_state('networkidle')
+                await page.wait_for_load_state('load')
                 await page.wait_for_timeout(1000)
                 logging.info('{} {} waiting for list-item'.format(response.request.url, response.request.headers['user-agent']))
         
