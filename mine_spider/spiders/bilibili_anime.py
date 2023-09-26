@@ -11,6 +11,9 @@ from scrapy import Spider, Selector, Request
 import logging
 import random
 from datetime import datetime
+from playwright.sync_api import TimeoutError
+from scrapy_playwright.page import PageMethod
+
 
 class BilibiliAnimeSpider(Spider):
     
@@ -19,10 +22,10 @@ class BilibiliAnimeSpider(Spider):
     start_url: str = 'https://www.bilibili.com/anime'
     custom_settings: dict = {
         'PLAYWRIGHT_BROWSER_TYPE': 'firefox',
-        'PLAYWRIGHT_LAUNCH_OPTIONS': {'headless': True, 'timeout': 0}, 
+        'PLAYWRIGHT_LAUNCH_OPTIONS': {'headless': True, 'timeout': 1000 * 60 * 30}, 
         'PLAYWRIGHT_MAX_CONTEXTS': 1,
-        'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 0,
-        'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 30,
+        'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 1000 * 60 * 30,
+        'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 50,
         'ITEM_PIPELINES': {
             'mine_spider.pipelines.BilibiliAnimePipeline': 500
         },
@@ -50,8 +53,13 @@ class BilibiliAnimeSpider(Spider):
                     'ignore_https_errors': True,
                  },
                 'playwright_page_goto_kwargs': {
-                    'wait_until': 'load',    
+                    'wait_until': 'load',
+                    'timeout': 1000 * 60 * 30,
                 },
+                "playwright_page_methods": [
+                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
+                    PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                ],
                 'playwright_include_page': True,
             }, 
             callback = self.anime_parse,
@@ -137,7 +145,8 @@ class BilibiliAnimeSpider(Spider):
                     
                     if block_name != '完结动画':
                         await rank_item.hover()
-                        await page.wait_for_timeout(500)
+                        await page.wait_for_timeout(800)
+                        await page.locator("//div[@class='video-info-module']").wait_for()
                         video_info_html = await page.locator("//div[@class='video-info-module']").inner_html()
                         video_info_selector = Selector(text = video_info_html)
                         # 热门排行项发布时间
@@ -175,36 +184,6 @@ class BilibiliAnimeSpider(Spider):
                         animeRankItem['rank_item_coin'] = ''
                     
                     self.bilibili_anime['rank_list'].append(animeRankItem)
-                    
-                    if ((block_name != '连载动画' and block_name != '完结动画') and
-                                                                ('BV1Xz4y1V7F6' in rank_item_href or
-                                                                'BV1384y1D7hH' in rank_item_href or 
-                                                                'BV1Rz4y1V7Lz' in rank_item_href or
-                                                                'BV1j84y1D7FX' in rank_item_href or
-                                                                'BV1nz4y1V7kq' in rank_item_href or
-                                                                'BV16K4y1F7VH' in rank_item_href or
-                                                                'BV1pK4y1F7kk' in rank_item_href or
-                                                                'BV1GF411m7n1' in rank_item_href or
-                                                                'BV16u41137yH' in rank_item_href or
-                                                                'BV1U84y1D7U7' in rank_item_href)):
-                        pass
-                        yield Request(url = self.url_prefix + rank_item_href,
-                            meta = {
-                                'playwright': True, 
-                                'playwright_context': 'bilibili-anime', 
-                                'playwright_context_kwargs': {
-                                    'ignore_https_errors': True,
-                                 },
-                                'playwright_page_goto_kwargs': {
-                                    'wait_until': 'load',
-                                    'timeout': 0
-                                },
-                                'playwright_include_page': True,
-                            }, 
-                            callback = self.anime_video_parse,
-                            errback = self.err_anime_callback,
-                            dont_filter = True,
-                        )
                 
                 # 点击热门时间范围
                 await block_item.locator("//div[@class='pgc-rank-dropdown rank-dropdown']").hover()
@@ -238,7 +217,8 @@ class BilibiliAnimeSpider(Spider):
                     
                     if block_name != '完结动画':
                         await rank_item.hover()
-                        await page.wait_for_timeout(500)
+                        await page.wait_for_timeout(800)
+                        await page.locator("//div[@class='video-info-module']").wait_for()
                         video_info_html = await page.locator("//div[@class='video-info-module']").inner_html()
                         video_info_selector = Selector(text = video_info_html)
                         # 热门排行项发布时间
@@ -276,30 +256,39 @@ class BilibiliAnimeSpider(Spider):
                         animeRankItem['rank_item_coin'] = ''
 
                     self.bilibili_anime['rank_list'].append(animeRankItem)
-                    
-                    #if block_name != '连载动画' and block_name != '完结动画':
-                    #    pass
-                    #    yield Request(url = self.url_prefix + rank_item_href,
-                    #        meta = {
-                    #            'playwright': True, 
-                    #            'playwright_context': 'bilibili-anime', 
-                    #            'playwright_context_kwargs': {
-                    #                'ignore_https_errors': True,
-                    #             },
-                    #            'playwright_page_goto_kwargs': {
-                    #                'wait_until': 'load',
-                    #            },
-                    #            'playwright_include_page': True,
-                    #        }, 
-                    #        callback = self.anime_video_parse,
-                    #        errback = self.err_anime_callback,
-                    #        dont_filter = True,
-                    #    )
-                
+        
+        await page.close()
+        await page.context.close()
+        #yield self.result
+        
         # 产生日志
         for animeRankItem in self.bilibili_anime['rank_list']:
             pass
-            logging.info(animeRankItem['rank_item_href'])
+            block_name = animeRankItem['block_name']
+            rank_item_href = animeRankItem['rank_item_href']
+            hot_time_range = animeRankItem['block_hot_time_range']
+            if block_name != '连载动画' and block_name != '完结动画' and block_name == '资讯' and hot_time_range == '三日':
+                yield Request(url = self.url_prefix + rank_item_href,
+                    meta = {
+                        'playwright': True, 
+                        'playwright_context': 'bilibili-anime-video-{}'.format(rank_item_href.split('/')[4]), 
+                        'playwright_context_kwargs': {
+                            'ignore_https_errors': True,
+                         },
+                        'playwright_page_goto_kwargs': {
+                            'wait_until': 'load',
+                            'timeout': 1000 * 60 * 30,
+                        },
+                        "playwright_page_methods": [
+                            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
+                            PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                        ],
+                        'playwright_include_page': True,
+                    }, 
+                    callback = self.anime_video_parse,
+                    errback = self.err_video_callback,
+                    dont_filter = True,
+                )
             #logging.info('{}频道{}区域{}热门排行：{}：{}\n{}\n链接: {}\n简介: {}'.format(self.channel_name, 
             #                                         animeRankItem['block_name'], 
             #                                         animeRankItem['block_hot_time_range'],
@@ -314,66 +303,79 @@ class BilibiliAnimeSpider(Spider):
             #                                         animeRankItem['rank_item_star'], 
             #                                         animeRankItem['rank_item_coin'], 
             #                                         animeRankItem['rank_item_pubman']))
-                    
-        await page.close()
-        yield self.result
     
     async def anime_video_parse(self, response):
         
         logging.info('获取视频详情, 请求频道{}，视频链接{}, ua为{}'.format(self.channel_name, response.request.url, response.request.headers['user-agent']))
         page = response.meta['playwright_page']
         
-        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")))
-        
-        while await page.locator("//div[@class='bui-collapse-header']").count() == 0:
-            logging.info('{} {} waiting for bui-collapse-header'.format(response.request.url, response.request.headers['user-agent']))
-            await page.wait_for_load_state('load')
-            await page.wait_for_timeout(1000)
-        
+        await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 60)
+        await page.locator("//div[@class='bui-collapse-header']").hover()
         await page.locator("//div[@class='bui-collapse-header']").click()
-        await page.wait_for_load_state('load')
-        await page.wait_for_timeout(2000)
-        
-        await page.locator("//video").click()
-        
-        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")))
+        await page.locator("//div[@class='bui-collapse-body']").wait_for(timeout=1000 * 60)
         
         resp = await page.content()
         selector = Selector(text = resp)
         
+        try:
+            await page.locator("//li[@class='bui-long-list-item']").first.wait_for(timeout=1000 * 60)
+        except TimeoutError:
+            logging.info('wait for bui-long-list-item timeout')
+        
         for dammu_item in selector.xpath("//li[@class='bui-long-list-item']"):
             logging.info('时间: {}, 弹幕内容: {}, 发送时间: {}'.format(dammu_item.xpath(".//span[@class='dm-info-time']/text()").extract_first(), 
-                                                      dammu_item.xpath(".//span[@class='dm-info-dm']/text()").extract_first(), 
-                                                      dammu_item.xpath(".//span[@class='dm-info-date']/text()").extract_first()))
+                                                      dammu_item.xpath(".//span[@class='dm-info-dm']/text()").extract_first().strip(), 
+                                                      dammu_item.xpath(".//span[@class='dm-info-date']/text()").extract_first().strip()))
+        
+        try:
+            await page.locator("//div[@id='viewbox_report']/h1[@class='video-title']").wait_for(timeout=1000 * 60)
+            await page.locator("//div[@class='video-info-detail-list']").wait_for(timeout=1000 * 60)
+        except TimeoutError:
+            logging.info('wait for bui-long-list-item and video-info-detail-list timeout')
         
         logging.info('视频标题 : {}'.format(selector.xpath("//div[@id='viewbox_report']/h1[@class='video-title']/text()").extract_first()))
         video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
-        logging.info('视频播放量 : {}'.format(video_info_detail.xpath("//span[@class='view item']/text()").extract_first()))
-        logging.info('视频弹幕量 : {}'.format(video_info_detail.xpath("//span[@class='dm item']/text()").extract_first()))
-        logging.info('视频发布时间 : {}'.format(video_info_detail.xpath("//span[@class='pubdate-ip item']/text()").extract_first()))
+        logging.info('视频播放量 : {}'.format(video_info_detail.xpath("//span[@class='view item']/text()").extract_first().strip()))
+        logging.info('视频弹幕量 : {}'.format(video_info_detail.xpath("//span[@class='dm item']/text()").extract_first().strip()))
+        logging.info('视频发布时间 : {}'.format(video_info_detail.xpath("//span[@class='pubdate-text']/text()").extract_first().strip()))
+        
+        try:
+            await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 60)
+        except TimeoutError:
+            logging.info('wait for up-info-container timeout')
         
         up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
         up_link = up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()
         logging.info('up主个人空间链接 : {}'.format(up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()))
-        logging.info('up主名称 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::a[@class='up-name is_vip']/text()").extract_first()))
+        logging.info('up主名称 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()))
         logging.info('up主简介 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()))
-        logging.info('up主已关注数量 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first()))
+        logging.info('up主已关注数量 : {}'.format(up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first().strip()))
+        
+        try:
+            await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 60)
+        except TimeoutError:
+            logging.info('wait for video-toolbar-left timeout')
         
         video_toolbar = selector.xpath("//div[@class='video-toolbar-left']")
         logging.info('视频点赞量 : {}'.format(video_toolbar.xpath("//span[@class='video-like-info video-toolbar-item-text']/text()").extract_first()))
         logging.info('视频投币量 : {}'.format(video_toolbar.xpath("//span[@class='video-coin-info video-toolbar-item-text']/text()").extract_first()))
         logging.info('视频收藏量 : {}'.format(video_toolbar.xpath("//span[@class='video-fav-info video-toolbar-item-text']/text()").extract_first()))
-        logging.info('视频转发量 : {}'.format(video_toolbar.xpath("//span[@class='video-share-info-text']/text()").extract_first()))
+        logging.info('视频转发量 : {}'.format(video_toolbar.xpath("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]/text()").extract_first()))
+        
+        try:
+            await page.locator("//div[@class='left-container-under-player']").wait_for(timeout=1000 * 60)
+        except TimeoutError:
+            logging.info('wait for left-container-under-player timeout')
         
         under_video_container = selector.xpath("//div[@class='left-container-under-player']")
         logging.info('视频简介 : {}'.format(under_video_container.xpath("//span[@class='desc-info-text']/text()").extract_first()))
         
         for tag in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']/text()"):
-            logging.info('视频标签 : {}'.format(tag.get()))
+            logging.info('视频标签 : {}'.format(tag.get().strip()))
         for tag in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']/text()"):
-            logging.info('视频标签 : {}'.format(tag.get()))
+            logging.info('视频标签 : {}'.format(tag.get().strip()))
         for tag in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']/text()"):
-            logging.info('视频标签 : {}'.format(tag.get()))
+            logging.info('视频标签 : {}'.format(tag.get().strip()))
         
         await page.evaluate("""
             window.scrollTo({
@@ -384,45 +386,32 @@ class BilibiliAnimeSpider(Spider):
         )
         await page.wait_for_timeout(3000)
         
-        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")))
+        await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 60)
+        await page.locator("//div[@class='bpx-player-video-area']").hover()
+        await page.locator("//div[@class='bpx-player-video-area']").click()
         
-        while await page.locator(selector = "//div[@class='rec-footer']").count() == 0:
-            await page.wait_for_load_state('load')
-            await page.wait_for_timeout(1000)
-            logging.info('{} {} waiting for rec-footer'.format(response.request.url, response.request.headers['user-agent']))
+        #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+                
+        await page.locator(selector = "//div[@class='rec-footer']").wait_for(timeout=1000 * 60)
         await page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
-        await page.wait_for_timeout(1000)
         
+        await page.locator(selector = "//div[@class='left-container-under-player']").wait_for(timeout=1000 * 60)
         await page.locator(selector = "//div[@class='left-container-under-player']").scroll_into_view_if_needed()
-        while await page.locator(selector = "//div[@class='reply-header']").count() == 0 and await page.locator(selector = "//div[@class='comment-header clearfix']").count() == 0:
-            await page.wait_for_load_state('load')
-            await page.wait_for_timeout(1000)
-            logging.info('{} {} waiting for reply-header'.format(response.request.url, response.request.headers['user-agent']))
-        if await page.locator(selector = "//div[@class='reply-header']").count() != 0:
-            await page.locator(selector = "//div[@class='reply-warp']").scroll_into_view_if_needed()
-            await page.wait_for_timeout(1000)
-        elif await page.locator(selector = "//div[@class='comment-header clearfix']").count() != 0:
-            await page.locator(selector = "//div[@class='comment-list ']").scroll_into_view_if_needed()
-            await page.wait_for_timeout(1000)
         
-        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")))
-        
-        while await page.locator(selector = "//div[@class='reply-list']").count() == 0 and await page.locator(selector = "//div[@class='comment-list ']").count() == 0:
-            await page.wait_for_load_state('load')
-            await page.wait_for_timeout(1000)
-            logging.info('{} {} waiting for reply-list or comment-list'.format(response.request.url, response.request.headers['user-agent']))
-        
-        if await page.locator(selector = "//div[@class='reply-list']").count() != 0:
-            while await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").count() == 0:
-                await page.wait_for_load_state('load')
-                await page.wait_for_timeout(1000)
-                logging.info('{} {} waiting for root-reply'.format(response.request.url, response.request.headers['user-agent']))
-        elif await page.locator(selector = "//div[@class='comment-list ']").count() != 0:
-            while await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").count() == 0:
-                await page.wait_for_load_state('load')
-                await page.wait_for_timeout(1000)
-                logging.info('{} {} waiting for list-item'.format(response.request.url, response.request.headers['user-agent']))
-        
+        try:
+            await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 60)
+        except TimeoutError:
+            logging.info('waiting for root-reply timeout')
+            
+        try:
+            await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 60)
+        except TimeoutError:
+            logging.info('waiting for list-item reply-wrap timeout')
+                
         resp = await page.content()
         selector = Selector(text = resp)
         
@@ -437,6 +426,12 @@ class BilibiliAnimeSpider(Spider):
                 logging.info('评论内容 : {}'.format(list_item.xpath(".//p[@class='text']/text()").extract_first()))
                 logging.info('评论时间 : {}'.format(list_item.xpath(".//div[@class='info']/span[@class='time-location']/span[@class='reply-time']/text()").extract_first()))
                 logging.info('评论被点赞数 : {}'.format(list_item.xpath(".//div[@class='info']/span[@class='like ']/span/text()").extract_first()))
+        
+        #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+        #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+        #    f.write(await page.content())
+        await page.close()
+        await page.context.close()
         
         #yield Request(url = self.url_prefix + up_link,
         #    meta = {
@@ -455,7 +450,6 @@ class BilibiliAnimeSpider(Spider):
         #    dont_filter = True,
         #)
         
-        await page.close()
         
     async def up_info_parse(self, response):
         
@@ -482,11 +476,45 @@ class BilibiliAnimeSpider(Spider):
         await page.close()
 
     async def err_anime_callback(self, failure):
+        logging.info('err_anime_callback')
         logging.info(repr(failure))
         page = failure.request.meta["playwright_page"]
-        logging.error('番剧页面加载出错')
-        #await page.screenshot(path="/screenshot.png", full_page=True)
+        logging.error('页面加载出错 url {}'.format(failure.request.url))
+        # await page.screenshot(path="/screenshot.png", full_page=True)
         #with open(file = "/screenshot.html", mode = 'w', encoding = 'utf-8') as f:
         #    f.write(await page.content())
         await page.close()
+        await page.context.close()
+    
+    async def err_video_callback(self, failure):
+        logging.info('err_video_callback')
+        logging.info(repr(failure))
+        page = failure.request.meta["playwright_page"]
+        logging.error('页面加载出错 url {}'.format(failure.request.url))
+        #await page.screenshot(path='/screenshot_{}_{}.png'.format(failure.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+        #with open(file = "/screenshot.html", mode = 'w', encoding = 'utf-8') as f:
+        #    f.write(await page.content())
+        await page.close()
+        await page.context.close()
+        #yield Request(url = failure.request.url,
+        #    meta = {
+        #        'playwright': True, 
+        #        'playwright_context': 'bilibili-anime', 
+        #        'playwright_context_kwargs': {
+        #            'ignore_https_errors': True,
+        #         },
+        #        'playwright_page_goto_kwargs': {
+        #            'wait_until': 'networkidle',
+        #            'timeout': 1000 * 60 * 30,
+        #        },
+        #        "playwright_page_methods": [
+        #            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
+        #            PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+        #        ],
+        #        'playwright_include_page': True,
+        #    }, 
+        #    callback = self.anime_video_parse,
+        #    errback = self.err_video_callback,
+        #    dont_filter = True,
+        #)
     
