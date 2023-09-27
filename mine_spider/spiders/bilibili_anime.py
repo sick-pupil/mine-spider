@@ -10,8 +10,10 @@ from ..settings import UA_LIST as ua_list
 from scrapy import Spider, Selector, Request
 import logging
 import random
+import uuid
 from datetime import datetime
 from playwright.sync_api import TimeoutError
+from playwright._impl._api_types import Error
 from scrapy_playwright.page import PageMethod
 
 
@@ -259,18 +261,21 @@ class BilibiliAnimeSpider(Spider):
         result['data'] = rank_item_list
         yield result
         
+        rank_item_bv_list = list()
         # 产生日志
         for animeRankItem in rank_item_list:
             pass
             block_name = animeRankItem['block_name']
             rank_item_href = animeRankItem['rank_item_href']
             hot_time_range = animeRankItem['block_hot_time_range']
+            rank_item_bv = rank_item_href.split('/')[4]
             
-            if block_name != '连载动画' and block_name != '完结动画':
+            if block_name != '连载动画' and block_name != '完结动画' and rank_item_bv not in rank_item_bv_list and 'BV1Rz4y1V7Lz' in rank_item_href:
+                rank_item_bv_list.append(rank_item_bv)
                 yield Request(url = self.url_prefix + rank_item_href,
                     meta = {
                         'playwright': True, 
-                        'playwright_context': 'bilibili-anime-video-{}'.format(rank_item_href.split('/')[4]), 
+                        'playwright_context': 'bilibili-anime-video-{}'.format(rank_item_bv), 
                         'playwright_context_kwargs': {
                             'ignore_https_errors': True,
                          },
@@ -331,16 +336,16 @@ class BilibiliAnimeSpider(Spider):
         await page.locator("//div[@class='bui-collapse-header']").click()
         await page.locator("//div[@class='bui-collapse-body']").wait_for(timeout=1000 * 60)
         
+        try:
+            await page.locator("//div[@class='dm-info-row ']").first.wait_for(timeout=1000 * 60)
+        except (TimeoutError, Error):
+            logging.error('wait for dm-info-row  timeout')
+        
         resp = await page.content()
         selector = Selector(text = resp)
         
-        try:
-            await page.locator("//li[@class='bui-long-list-item']").first.wait_for(timeout=1000 * 60)
-        except TimeoutError:
-            logging.error('wait for bui-long-list-item timeout')
-        
         rank_item_video_dammu_list : list = []
-        for dammu_item_selector in selector.xpath("//li[@class='bui-long-list-item']"):
+        for dammu_item_selector in selector.xpath("//div[@class='dm-info-row ']"):
             #logging.info('时间: {}, 弹幕内容: {}, 发送时间: {}'.format(dammu_item.xpath(".//span[@class='dm-info-time']/text()").extract_first(), 
             #                                          dammu_item.xpath(".//span[@class='dm-info-dm']/text()").extract_first().strip(), 
             #                                          dammu_item.xpath(".//span[@class='dm-info-date']/text()").extract_first().strip()))
@@ -357,7 +362,7 @@ class BilibiliAnimeSpider(Spider):
         try:
             await page.locator("//div[@id='viewbox_report']/h1[@class='video-title']").wait_for(timeout=1000 * 60)
             await page.locator("//div[@class='video-info-detail-list']").wait_for(timeout=1000 * 60)
-        except TimeoutError:
+        except (TimeoutError, Error):
             logging.error('wait for bui-long-list-item and video-info-detail-list timeout')
         
         video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
@@ -377,7 +382,7 @@ class BilibiliAnimeSpider(Spider):
         
         try:
             await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 60)
-        except TimeoutError:
+        except (TimeoutError, Error):
             logging.error('wait for up-info-container timeout')
         
         up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
@@ -399,7 +404,7 @@ class BilibiliAnimeSpider(Spider):
         
         try:
             await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 60)
-        except TimeoutError:
+        except (TimeoutError, Error):
             logging.error('wait for video-toolbar-left timeout')
         
         video_toolbar = selector.xpath("//div[@class='video-toolbar-left']")
@@ -419,7 +424,7 @@ class BilibiliAnimeSpider(Spider):
         
         try:
             await page.locator("//div[@class='left-container-under-player']").wait_for(timeout=1000 * 60)
-        except TimeoutError:
+        except (TimeoutError, Error):
             logging.info('wait for left-container-under-player timeout')
         
         under_video_container = selector.xpath("//div[@class='left-container-under-player']")
@@ -451,9 +456,7 @@ class BilibiliAnimeSpider(Spider):
             """
         )
         await page.wait_for_timeout(3000)
-        
-        #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-                
+                        
         await page.locator(selector = "//div[@class='rec-footer']").wait_for(timeout=1000 * 60)
         await page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
         
@@ -464,14 +467,14 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 60)
             await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 60)
             await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 60)
-        except TimeoutError:
+        except (TimeoutError, Error):
             logging.info('waiting for root-reply timeout')
             
         try:
             await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 60)
             await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 60)
             await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 60)
-        except TimeoutError:
+        except (TimeoutError, Error):
             logging.info('waiting for list-item reply-wrap timeout')
                 
         resp = await page.content()
@@ -509,8 +512,7 @@ class BilibiliAnimeSpider(Spider):
         rank_item_video_detail['video_detail_reply'] = selector.xpath(query = "//span[@class='total-reply']/text()").extract_first()
         
         #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-        #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-        #    f.write(await page.content())
+        
                 
         # 输出日志
         logging.info('视频标题 : {}'.format(rank_item_video_detail['video_detail_title']))
@@ -547,22 +549,32 @@ class BilibiliAnimeSpider(Spider):
         result['data'] = list().append(rank_item_video_detail)
         yield result
         
-        #yield Request(url = self.url_prefix + up_link,
-        #    meta = {
-        #        'playwright': True, 
-        #        'playwright_context': 'bilibili-anime', 
-        #        'playwright_context_kwargs': {
-        #            'ignore_https_errors': True,
-        #         },
-        #        'playwright_page_goto_kwargs': {
-        #            'wait_until': 'networkidle',
-        #        },
-        #        'playwright_include_page': True,
-        #    }, 
-        #    callback = self.up_info_parse,
-        #    errback = self.err_anime_callback,
-        #    dont_filter = True,
-        #)
+        up_link_id = rank_item_video_detail['video_detail_up_link'].split('/')[3]
+        yield Request(url = self.url_prefix + rank_item_video_detail['video_detail_up_link'],
+            meta = {
+                'playwright': True, 
+                'playwright_context': 'video-up-{}-{}'.format(up_link_id, datetime.now().strftime("%Y%m%d%H%M%S")), 
+                'playwright_context_kwargs': {
+                    'ignore_https_errors': True,
+                 },
+                'playwright_page_goto_kwargs': {
+                    'wait_until': 'networkidle',
+                    'timeout': 1000 * 60 * 30,
+                },
+                "playwright_page_methods": [
+                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
+                    PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                ],
+                'playwright_include_page': True,
+            }, 
+            callback = self.up_info_parse,
+            errback = self.err_anime_callback,
+            dont_filter = True,
+        )
+        
+        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+        with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+            f.write(await page.content())
         
         await page.close()
         await page.context.close()
@@ -572,25 +584,42 @@ class BilibiliAnimeSpider(Spider):
         
         logging.info('获取视频发布人详情, 请求频道{}，up个人空间链接{}, ua为{}'.format(self.channel_name, response.request.url, response.request.headers['user-agent']))
         page = response.meta['playwright_page']
+        
+        try:
+            await page.locator("//div[@class='geetest_panel geetest_wind']").wait_for(timeout=1000 * 5)
+        except (TimeoutError, Error):
+            logging.info('wait for geetest_panel geetest_wind timeout')
+        await page.evaluate('''() => {
+            let elements = document.querySelectorAll('.geetest_panel geetest_wind');
+            elements.forEach(element => element.parentNode.removeChild(element));
+        }''')
+        await page.wait_for_load_state('networkidle')
+        
+        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[3], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+        
+        with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[3], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+            f.write(await page.content())
             
         up_basic_info = await page.locator("//div[@class='h-basic']").inner_html()
         up_basic_info_selector = Selector(text = up_basic_info)
         logging.info('up名称 : {}'.format(up_basic_info_selector.xpath("//span[@id='h-name']/text()").extract_first()))
-        logging.info('up简介 : {}'.format(up_basic_info_selector.xpath("//div[@class='h-basic-spacing']/h4[@class='h-sign']/text()").extract_first()))
+        logging.info('up简介 : {}'.format(up_basic_info_selector.xpath("//div[@class='h-basic-spacing']/h4[@class='h-sign']/text()").extract_first().strip()))
         
         up_tab_links = await page.locator("//div[@id='navigator']/descendant::div[@class='n-tab-links']").inner_html()
         up_tab_links_selector = Selector(text = up_tab_links)
-        logging.info('up投稿数 : {}'.format(up_tab_links_selector.xpath("//a[@class='n-btn n-video n-audio n-article n-album']/span[@class='n-num']/text()").extract_first()))
-        logging.info('up合集数 : {}'.format(up_tab_links_selector.xpath("//a[@class='n-btn n-channel']/span[@class='n-num']/text()").extract_first()))
+        logging.info('up投稿数 : {}'.format(up_tab_links_selector.xpath("//a[@class='n-btn n-video n-audio n-article n-album']/span[@class='n-num']/text()").extract_first().strip()))
+        logging.info('up合集数 : {}'.format(up_tab_links_selector.xpath("//a[@class='n-btn n-channel']/span[@class='n-num']/text()").extract_first().strip()))
         
         up_gz_fs = await page.locator("//div[@id='navigator']/descendant::div[@class='n-statistics']").inner_html()
         up_gz_fs_selector = Selector(text = up_gz_fs)
-        logging.info('up被关注数 : {}'.format(up_gz_fs_selector.xpath("//div[@class='n-data n-gz']/p[@id='n-gz']/text()").extract_first()))
-        logging.info('up粉丝数 : {}'.format(up_gz_fs_selector.xpath("//div[@class='n-data n-fs']/p[@id='n-fs']/text()").extract_first()))
+        logging.info('up被关注数 : {}'.format(up_gz_fs_selector.xpath("//div[@class='n-data n-gz']/p[@id='n-gz']/text()").extract_first().strip()))
+        logging.info('up粉丝数 : {}'.format(up_gz_fs_selector.xpath("//div[@class='n-data n-fs']/p[@id='n-fs']/text()").extract_first().strip()))
         
-        logging.info('up UID : {}'.format(await page.locator("//div[@class='info-wrap']/span[@class='info-value']").first.inner_text()))
+        up_uid = await page.locator("//div[@class='info-wrap']/span[@class='info-value']").first.inner_text()
+        logging.info('up UID : {}'.format(up_uid.strip()))
         
         await page.close()
+        await page.context.close()
 
     async def err_anime_callback(self, failure):
         logging.info('err_anime_callback')
