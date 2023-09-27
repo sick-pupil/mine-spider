@@ -6,20 +6,12 @@
 
 from scrapy import Item, Field
 
-# 总返回
-class Result(Item):
+# 数据返回
+class BilibiliResult(Item):
     
     code : int = Field()
     msg : str = Field()
-    data : object = Field()
-
-# B站番剧区返回
-class BilibiliChannel(Item):
-    
-    # 频道类型
-    channel_name : str = Field()
-    # 频道热门列表
-    rank_list : list = Field()
+    data : list = Field()
 
 # 番剧区rank
 class BilibiliRankItem(Item):
@@ -76,12 +68,18 @@ class BilibiliVideoDetail(Item):
     video_detail_desc : str = Field()
     # 视频总评论数
     video_detail_reply : str = Field()
-    # 视频最热前100条评论
+    # 视频最热评论
     video_detail_hot_replys : list = Field()
     # 视频所有弹幕
     video_detail_danmus : list = Field()
-    # 视频发布人信息
-    video_detail_ups : list = Field()
+    # 视频发布人个人空间链接
+    video_detail_up_link : str = Field()
+    # 视频发布人名称
+    video_detail_up_name : str = Field()
+    # 视频发布人简介
+    video_detail_up_desc : str = Field()
+    # 视频发布人被关注数量
+    video_detail_up_gz : str = Field()
 
 # 视频弹幕详情
 class BilibiliVideoDanmu(Item):
@@ -92,6 +90,16 @@ class BilibiliVideoDanmu(Item):
     video_danmu_context : str = Field()
     # 弹幕发送时间
     video_danmu_pubtime : str = Field()
+
+# 视频评论详情
+class BilibiliVideoReply(Item):
+    
+    # 评论内容
+    video_reply_context : str = Field()
+    # 评论时间
+    video_reply_time : str = Field()
+    # 评论被点赞数
+    video_reply_like : str = Field()
 
 # 视频发布人信息
 class BilibiliUpInfo(Item):
