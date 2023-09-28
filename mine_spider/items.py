@@ -13,7 +13,33 @@ class BilibiliResult(Item):
     msg : str = Field()
     data : list = Field()
 
-# 番剧区rank
+# 频道新区new rank
+class BilibiliNewRankItem(Item):
+    
+    # 小类区名字
+    area_name : str = Field()
+    # 小类区热门项排行
+    rank_item_order : int = Field()
+    # 热门项视频标题
+    rank_item_title : str = Field()
+    # 热门项视频up名称
+    rank_item_up_name : str = Field()
+    # 热门项视频标题
+    rank_video_card_title : str = Field()
+    # 热门项视频up名称
+    rank_video_card_up_name : str = Field()
+    # 热门项视频发布时间
+    rank_video_card_pubdate : str = Field()
+    # 热门项视频播放量
+    rank_video_card_play : str = Field()
+    # 热门项视频弹幕量
+    rank_video_card_danmu : str = Field()
+    # 热门项视频收藏量
+    rank_video_card_star : str = Field()
+    # 热门项视频投币量
+    rank_video_card_coin : str = Field()
+
+# 频道区rank
 class BilibiliRankItem(Item):
     
     # 小类区名字

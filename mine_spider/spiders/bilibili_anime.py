@@ -626,9 +626,6 @@ class BilibiliAnimeSpider(Spider):
         logging.info(repr(failure))
         page = failure.request.meta["playwright_page"]
         logging.error('页面加载出错 url {}'.format(failure.request.url))
-        # await page.screenshot(path="/screenshot.png", full_page=True)
-        #with open(file = "/screenshot.html", mode = 'w', encoding = 'utf-8') as f:
-        #    f.write(await page.content())
         await page.close()
         await page.context.close()
     
@@ -637,30 +634,6 @@ class BilibiliAnimeSpider(Spider):
         logging.info(repr(failure))
         page = failure.request.meta["playwright_page"]
         logging.error('页面加载出错 url {}'.format(failure.request.url))
-        #await page.screenshot(path='/screenshot_{}_{}.png'.format(failure.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-        #with open(file = "/screenshot.html", mode = 'w', encoding = 'utf-8') as f:
-        #    f.write(await page.content())
         await page.close()
         await page.context.close()
-        #yield Request(url = failure.request.url,
-        #    meta = {
-        #        'playwright': True, 
-        #        'playwright_context': 'bilibili-anime', 
-        #        'playwright_context_kwargs': {
-        #            'ignore_https_errors': True,
-        #         },
-        #        'playwright_page_goto_kwargs': {
-        #            'wait_until': 'networkidle',
-        #            'timeout': 1000 * 60 * 30,
-        #        },
-        #        "playwright_page_methods": [
-        #            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-        #            PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
-        #        ],
-        #        'playwright_include_page': True,
-        #    }, 
-        #    callback = self.anime_video_parse,
-        #    errback = self.err_video_callback,
-        #    dont_filter = True,
-        #)
     

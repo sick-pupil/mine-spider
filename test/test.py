@@ -101,10 +101,6 @@ with sync_playwright() as p:
         area_grid.scroll_into_view_if_needed()
     page.wait_for_load_state('networkidle')
     
-    #page.screenshot(path="C:\\Users\\ASUS\\Desktop\\screenshot_{}.png".format(datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-    #with open(file="C:\\Users\\ASUS\\Desktop\\screenshot_{}.html".format(datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-    #    f.write(page.content())
-    
     for area_grid in page.locator("//div[@class='bili-grid']").all():
         area_grid.scroll_into_view_if_needed()
                 
@@ -128,18 +124,18 @@ with sync_playwright() as p:
                 
                 rank_video_card = page.locator("//div[@class='rank-video-card__popover']")
                 rank_video_card_title = rank_video_card.locator("//h3[@class='rank-video-card__popover--tit']").inner_text()
-                up_name = rank_video_card.locator("//p[@class='rank-video-card__popover--author']/span[position()=1]").inner_text()
-                rank_item_pubdate = rank_video_card.locator("//p[@class='rank-video-card__popover--author']/span[position()=2]").inner_text()
+                rank_video_card_up_name = rank_video_card.locator("//p[@class='rank-video-card__popover--author']/span[position()=1]").inner_text()
+                rank_video_card_pubdate = rank_video_card.locator("//p[@class='rank-video-card__popover--author']/span[position()=2]").inner_text()
                 
-                rank_item_play = rank_video_card.locator("//li[@class='rank-video-card__popover--stats__item' and position()=1]/span").inner_text()
-                rank_item_danmu = rank_video_card.locator("//li[@class='rank-video-card__popover--stats__item' and position()=2]/span").inner_text()
-                rank_item_star = rank_video_card.locator("//li[@class='rank-video-card__popover--stats__item' and position()=3]/span").inner_text()
-                rank_item_coin = rank_video_card.locator("//li[@class='rank-video-card__popover--stats__item' and position()=4]/span").inner_text()
+                rank_video_card_play = rank_video_card.locator("//li[@class='rank-video-card__popover--stats__item' and position()=1]/span").inner_text()
+                rank_video_card_danmu = rank_video_card.locator("//li[@class='rank-video-card__popover--stats__item' and position()=2]/span").inner_text()
+                rank_video_card_star = rank_video_card.locator("//li[@class='rank-video-card__popover--stats__item' and position()=3]/span").inner_text()
+                rank_video_card_coin = rank_video_card.locator("//li[@class='rank-video-card__popover--stats__item' and position()=4]/span").inner_text()
                 
-                print('播放量 : {}'.format(rank_item_play))
-                print('弹幕量 : {}'.format(rank_item_danmu))
-                print('收藏量 : {}'.format(rank_item_star))
-                print('投币量 : {}'.format(rank_item_coin))
+                print('播放量 : {}'.format(rank_video_card_play))
+                print('弹幕量 : {}'.format(rank_video_card_danmu))
+                print('收藏量 : {}'.format(rank_video_card_star))
+                print('投币量 : {}'.format(rank_video_card_coin))
         
     page.close()
     
