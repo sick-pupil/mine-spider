@@ -119,10 +119,11 @@ class BilibiliMusicSpider(Spider):
                 
                 area_grid_selector = Selector(text = await area_grid.inner_html())
                         
-                area_name = area_grid_selector.xpath("//div[@class='video-card-list']/div[@class='area-header']/div[@class='left']/text()").extract_first()
+                area_name = await area_grid.locator("//div[@class='video-card-list']/div[@class='area-header']/div[@class='left']").inner_text()
                 if area_name == '前方高能':
                     continue
                 
+                logging.info(area_name)
                 rank_item_list = await area_grid.locator("//aside/descendant::li[@class='bili-rank-list-video__item']/div[@class='bili-rank-list-video__item--wrap']").all()
                 for rank_item_index in range(len(rank_item_list)):
                     if rank_item_index < 8:
