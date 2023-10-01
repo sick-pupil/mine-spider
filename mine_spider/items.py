@@ -6,13 +6,6 @@
 
 from scrapy import Item, Field
 
-# 数据返回
-class BilibiliResult(Item):
-    
-    code : int = Field()
-    msg : str = Field()
-    data : list = Field()
-
 # 频道新区new rank
 class BilibiliNewRankItem(Item):
     
@@ -24,24 +17,39 @@ class BilibiliNewRankItem(Item):
     rank_item_title : str = Field()
     # 热门项视频up名称
     rank_item_up_name : str = Field()
-    # 热门项视频标题
+    # 热门项视频卡标题
     rank_video_card_title : str = Field()
-    # 热门项视频up名称
+    # 热门项视频卡up名称
     rank_video_card_up_name : str = Field()
-    # 热门项视频发布时间
+    # 热门项视频卡发布时间
     rank_video_card_pubdate : str = Field()
-    # 热门项视频播放量
+    # 热门项视频卡播放量
     rank_video_card_play : str = Field()
-    # 热门项视频弹幕量
+    # 热门项视频卡弹幕量
     rank_video_card_danmu : str = Field()
-    # 热门项视频收藏量
+    # 热门项视频卡收藏量
     rank_video_card_star : str = Field()
-    # 热门项视频投币量
+    # 热门项视频卡投币量
     rank_video_card_coin : str = Field()
+    
+    def to_tuple(self):
+        return (self.area_name, 
+                self.rank_item_order, 
+                self.rank_item_title, 
+                self.rank_item_up_name, 
+                self.rank_video_card_title, 
+                self.rank_video_card_up_name, 
+                self.rank_video_card_pubdate, 
+                self.rank_video_card_play, 
+                self.rank_video_card_danmu, 
+                self.rank_video_card_star, 
+                self.rank_video_card_coin)
 
 # 频道区rank
 class BilibiliRankItem(Item):
     
+    # bv号
+    rank_item_bv : str = Field()
     # 小类区名字
     block_name : str = Field()
     # 小类区热门排行时间范围
@@ -68,6 +76,26 @@ class BilibiliRankItem(Item):
     rank_item_star : str = Field()
     # 热门排行项硬币数量
     rank_item_coin : str = Field()
+    # 视频详情信息
+    rank_item_video_detail : object = Field()
+    # 视频发布人信息
+    rank_item_up_detail : object = Field()
+    
+    def to_tuple(self):
+        return (self.rank_item_bv, 
+                self.block_name, 
+                self.block_hot_time_range, 
+                self.rank_item_num, 
+                self.rank_item_href, 
+                self.rank_item_detail_title, 
+                self.rank_item_detail_point, 
+                self.rank_item_pubman, 
+                self.rank_item_desc, 
+                self.rank_item_time, 
+                self.rank_item_play, 
+                self.rank_item_danmu, 
+                self.rank_item_star, 
+                self.rank_item_coin)
 
 # 视频详情信息
 class BilibiliVideoDetail(Item):
@@ -106,6 +134,22 @@ class BilibiliVideoDetail(Item):
     video_detail_up_desc : str = Field()
     # 视频发布人被关注数量
     video_detail_up_gz : str = Field()
+    
+    def to_tuple(self):
+        return (self.video_detail_title, 
+                self.video_detail_play, 
+                self.video_detail_danmu, 
+                self.video_detail_pubtime, 
+                self.video_detail_like, 
+                self.video_detail_coin, 
+                self.video_detail_star, 
+                self.video_detail_share, 
+                self.video_detail_desc, 
+                self.video_detail_reply, 
+                self.video_detail_up_link, 
+                self.video_detail_up_name,
+                self.video_detail_up_desc,
+                self.video_detail_up_gz)
 
 # 视频弹幕详情
 class BilibiliVideoDanmu(Item):
@@ -116,6 +160,11 @@ class BilibiliVideoDanmu(Item):
     video_danmu_context : str = Field()
     # 弹幕发送时间
     video_danmu_pubtime : str = Field()
+    
+    def to_tuple(self):
+        return (self.video_danmu_pubtime_in_video, 
+                self.video_danmu_context, 
+                self.video_danmu_pubtime)
 
 # 视频评论详情
 class BilibiliVideoReply(Item):
@@ -126,14 +175,17 @@ class BilibiliVideoReply(Item):
     video_reply_time : str = Field()
     # 评论被点赞数
     video_reply_like : str = Field()
+    
+    def to_tuple(self):
+        return (self.video_reply_context, 
+                self.video_reply_time, 
+                self.video_reply_like)
 
 # 视频发布人信息
 class BilibiliUpInfo(Item):
     
     # up名称
     up_name : str = Field()
-    # up性别
-    up_sex : str = Field()
     # up简介
     up_desc : str = Field()
     # up关注数
@@ -144,7 +196,14 @@ class BilibiliUpInfo(Item):
     up_tg : str = Field()
     # up合集和列表数
     up_hj : str = Field()
-    # up充电人数
-    up_elec : str = Field()
     # up uid
     up_uid : str = Field()
+    
+    def to_tuple(self):
+        return (self.up_uid, 
+                self.up_name, 
+                self.up_desc, 
+                self.up_gz, 
+                self.up_fs, 
+                self.up_tg, 
+                self.up_hj)

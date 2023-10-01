@@ -5,7 +5,7 @@ Created on Thu Sep 28 15:43:19 2023
 @author: ASUS
 """
 
-from ..items import BilibiliResult, BilibiliNewRankItem, BilibiliVideoDetail, BilibiliVideoDanmu, BilibiliVideoReply, BilibiliUpInfo
+from ..items import BilibiliNewRankItem, BilibiliVideoDetail, BilibiliVideoDanmu, BilibiliVideoReply, BilibiliUpInfo
 from ..settings import UA_LIST as ua_list
 from scrapy import Spider, Selector, Request
 import logging
