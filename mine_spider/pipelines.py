@@ -10,6 +10,9 @@ import logging
 import pymysql
 
 class BilibiliAnimePipeline(object):
+    
+    def __init__(self):
+        self.logger = logging.getLogger('bilibili-anime-pipeline')
    
     def open_spider(self, spider):
         pass
@@ -20,63 +23,63 @@ class BilibiliAnimePipeline(object):
                                        passwd = spider.settings.get('MYSQL_PASSWORD'), 
                                        charset = 'utf8')
         self.db_cursor = self.db_conn.cursor()
-        self.insert_rank_item_sql = """insert into `bilibili_rank_items` (bv, 
-                                                                block_name, 
-                                                                block_hot_time_range, 
-                                                                order_num, 
-                                                                href, 
-                                                                title, 
-                                                                point, 
-                                                                pubman_name, 
-                                                                desc, 
-                                                                time, 
-                                                                play, 
-                                                                danmu, 
-                                                                star, 
-                                                                coin) 
+        self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`bv`, 
+                                                                `block_name`, 
+                                                                `block_hot_time_range`, 
+                                                                `order_num`, 
+                                                                `href`, 
+                                                                `title`, 
+                                                                `point`, 
+                                                                `pubman_name`, 
+                                                                `desc`, 
+                                                                `time`, 
+                                                                `play`, 
+                                                                `danmu`, 
+                                                                `star`, 
+                                                                `coin`) 
                                         values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (bv, 
-                                                                                title, 
-                                                                                play, 
-                                                                                danmu, 
-                                                                                pubtime, 
-                                                                                like, 
-                                                                                coin, 
-                                                                                star, 
-                                                                                share, 
-                                                                                desc, 
-                                                                                reply, 
-                                                                                up_link, 
-                                                                                up_name, 
-                                                                                up_desc, 
-                                                                                up_gz) 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+                                                                                `title`, 
+                                                                                `play`, 
+                                                                                `danmu`, 
+                                                                                `pubtime`, 
+                                                                                `like`, 
+                                                                                `coin`, 
+                                                                                `star`, 
+                                                                                `share`, 
+                                                                                `desc`, 
+                                                                                `reply`, 
+                                                                                `up_link`, 
+                                                                                `up_name`, 
+                                                                                `up_desc`, 
+                                                                                `up_gz`) 
                                         values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (bv, 
-                                                                                context, 
-                                                                                time, 
-                                                                                like) 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+                                                                                `context`, 
+                                                                                `time`, 
+                                                                                `like`) 
                                         values (%s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (bv, 
-                                                                                pubtime_in_video, 
-                                                                                context, 
-                                                                                pubtime) 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+                                                                                `pubtime_in_video`, 
+                                                                                `context`, 
+                                                                                `pubtime`) 
                                         values (%s, %s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (bv, 
-                                                                        up_uid, 
-                                                                        up_name, 
-                                                                        up_desc, 
-                                                                        up_gz, 
-                                                                        up_fs, 
-                                                                        up_tg, 
-                                                                        up_hj) 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+                                                                        `up_uid`, 
+                                                                        `up_name`, 
+                                                                        `up_desc`, 
+                                                                        `up_gz`, 
+                                                                        `up_fs`, 
+                                                                        `up_tg`, 
+                                                                        `up_hj`) 
                                         values (%s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
@@ -126,7 +129,7 @@ class BilibiliAnimePipeline(object):
         self.logger.info('收集视频评论详情信息')
         reply_tuple_list = list()
         for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-            reply_tuple = tuple(item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like'])
+            reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
             reply_tuple_list.append(reply_tuple)
         self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
         
@@ -134,7 +137,7 @@ class BilibiliAnimePipeline(object):
         self.logger.info('收集视频弹幕详情信息')
         danmu_tuple_list = list()
         for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-            danmu_tuple = tuple(item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime'])
+            danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
             danmu_tuple_list.append(danmu_tuple)
         self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
         
