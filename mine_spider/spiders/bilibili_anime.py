@@ -271,7 +271,7 @@ class BilibiliAnimeSpider(Spider):
             rank_item_bv = animeRankItem['rank_item_bv']
             hot_time_range = animeRankItem['block_hot_time_range']
             
-            if block_name != '连载动画' and block_name != '完结动画' and block_name == '资讯':
+            if block_name != '连载动画' and block_name != '完结动画':
                 yield Request(url = self.url_prefix + rank_item_href,
                     meta = {
                         'playwright': True, 
@@ -329,14 +329,8 @@ class BilibiliAnimeSpider(Spider):
             elements.forEach(element => element.parentNode.removeChild(element));
         }''')
         
-        try:
-            await page.locator("//div[@id='media_module']").wait_for(timeout=1000 * 10)
-            await page.locator("//div[@class='mediainfo_mediaInfo__Cpow4']").wait_for(timeout=1000 * 10)
-        except (TimeoutError, Error):
-            self.logger.error('wait for media_module timeout')
-            self.logger.error('wait for mediainfo_mediaInfo__Cpow4 timeout')
-        
-        if await page.locator("//div[@id='media_module']").count() != 0 or await page.locator("//div[@class='mediainfo_mediaInfo__Cpow4']").count() != 0:
+        page_url = page.url
+        if 'BV' not in page_url and 'video' not in page_url:
             self.result_by_dict.pop(rank_item_bv)
             await page.close()
             await page.context.close()
@@ -460,6 +454,7 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 15)
             await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 15)
             await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 15)
+            await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 15)
         except (TimeoutError, Error):
             self.logger.info('waiting for root-reply timeout')
             
@@ -467,6 +462,7 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 15)
             await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 15)
             await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 15)
+            await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 15)
         except (TimeoutError, Error):
             self.logger.info('waiting for list-item reply-wrap timeout')
                 
