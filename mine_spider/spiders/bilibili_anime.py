@@ -22,9 +22,9 @@ class BilibiliAnimeSpider(Spider):
     start_url: str = 'https://www.bilibili.com/anime'
     custom_settings: dict = {
         'PLAYWRIGHT_BROWSER_TYPE': 'firefox',
-        'PLAYWRIGHT_LAUNCH_OPTIONS': {'headless': True, 'timeout': 1000 * 60 * 30}, 
+        'PLAYWRIGHT_LAUNCH_OPTIONS': {'headless': True, 'timeout': 1000 * 60 * 60 * 3}, 
         'PLAYWRIGHT_MAX_CONTEXTS': 1,
-        'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 1000 * 60 * 30,
+        'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 1000 * 60 * 60 * 3,
         'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 50,
         'ITEM_PIPELINES': {
             'mine_spider.pipelines.BilibiliAnimePipeline': 500
@@ -46,7 +46,7 @@ class BilibiliAnimeSpider(Spider):
                 'playwright_context': 'bilibili-anime', 
                 'playwright_context_kwargs': {
                     'ignore_https_errors': True,
-                 },
+                },
                 'playwright_page_goto_kwargs': {
                     'wait_until': 'load',
                     'timeout': 1000 * 60 * 30,
@@ -81,10 +81,15 @@ class BilibiliAnimeSpider(Spider):
                     'playwright_context': 'bilibili-anime', 
                     'playwright_context_kwargs': {
                         'ignore_https_errors': True,
-                     },
-                    'playwright_page_goto_kwargs': {
-                        'wait_until': 'load',    
                     },
+                    'playwright_page_goto_kwargs': {
+                        'wait_until': 'load',
+                        'timeout': 1000 * 60 * 30,
+                    },
+                    "playwright_page_methods": [
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                    ],
                     'playwright_include_page': True,
                 }, 
                 callback = self.anime_parse,
