@@ -35,7 +35,7 @@ class BilibiliAnimeSpider(Spider):
     }
 
     def __init__(self):
-        self.channel_name : str = '番剧'        
+        self.channel_name : str = 'anime'        
         self.url_prefix : str = 'https:'
         self.result_by_dict : dict = dict()
     
@@ -74,7 +74,7 @@ class BilibiliAnimeSpider(Spider):
         browser_version_toolow_tips = selector.xpath("//div[contains(@class, 'pic-box')]/p/text()").extract()
         # 如果浏览器版本过低，无法正常访问此页面
         if len(browser_version_toolow_tips) != 0 and '浏览器版本过低' in browser_version_toolow_tips[0] and '已无法正常访问此页面' in browser_version_toolow_tips[0]:
-            self.logger.error('访问{}频道浏览器版本过低，出现下载建议，使用的ua为 {}'.format(self.channel_name, response.request.headers['user-agent']))
+            self.logger.info('访问{}频道浏览器版本过低，出现下载建议，使用的ua为 {}'.format(self.channel_name, response.request.headers['user-agent']))
             yield Request(url = self.start_url,
                 meta = {
                     'playwright': True, 
@@ -135,6 +135,7 @@ class BilibiliAnimeSpider(Spider):
                     rank_item_detail_point = rank_item_selector.xpath(query = "//a[@class='ri-info-wrap clearfix']/div[@class='ri-detail']/p[@class='ri-point']/text()").extract_first()
                     
                     animeRankItem = BilibiliRankItem()
+                    animeRankItem['channel_name'] = self.channel_name
                     animeRankItem['block_name'] = block_name
                     animeRankItem['block_hot_time_range'] = block_hot_time_range
                     animeRankItem['rank_item_num'] = rank_item_num
@@ -214,6 +215,7 @@ class BilibiliAnimeSpider(Spider):
                     rank_item_detail_point = rank_item_selector.xpath(query = "//a[@class='ri-info-wrap clearfix']/div[@class='ri-detail']/p[@class='ri-point']/text()").extract_first()
                     
                     animeRankItem = BilibiliRankItem()
+                    animeRankItem['channel_name'] = self.channel_name
                     animeRankItem['block_name'] = block_name
                     animeRankItem['block_hot_time_range'] = block_hot_time_range
                     animeRankItem['rank_item_num'] = rank_item_num
@@ -349,11 +351,11 @@ class BilibiliAnimeSpider(Spider):
         try:
             await page.locator("//div[@class='dm-info-row ']").first.wait_for(timeout=1000 * 60)
         except (TimeoutError, Error):
-            self.logger.error('wait for dm-info-row  timeout')
+            self.logger.info('wait for dm-info-row  timeout')
         
-        await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-        with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-            f.write(await page.content())
+        #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+        #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+        #    f.write(await page.content())
         
         resp = await page.content()
         selector = Selector(text = resp)
@@ -374,7 +376,7 @@ class BilibiliAnimeSpider(Spider):
             await page.locator("//div[@id='viewbox_report']/h1[@class='video-title']").wait_for(timeout=1000 * 60)
             await page.locator("//div[@class='video-info-detail-list']").wait_for(timeout=1000 * 60)
         except (TimeoutError, Error):
-            self.logger.error('wait for bui-long-list-item and video-info-detail-list timeout')
+            self.logger.info('wait for bui-long-list-item and video-info-detail-list timeout')
         
         video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
         # 视频标题
@@ -390,7 +392,7 @@ class BilibiliAnimeSpider(Spider):
         try:
             await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 60)
         except (TimeoutError, Error):
-            self.logger.error('wait for up-info-container timeout')
+            self.logger.info('wait for up-info-container timeout')
         
         up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")        
         # up主个人空间链接
@@ -405,7 +407,7 @@ class BilibiliAnimeSpider(Spider):
         try:
             await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 60)
         except (TimeoutError, Error):
-            self.logger.error('wait for video-toolbar-left timeout')
+            self.logger.info('wait for video-toolbar-left timeout')
         
         video_toolbar = selector.xpath("//div[@class='video-toolbar-left']")
         # 视频点赞
@@ -653,7 +655,7 @@ class BilibiliAnimeSpider(Spider):
         self.logger.info('err_anime_callback')
         self.logger.info(repr(failure))
         page = failure.request.meta["playwright_page"]
-        self.logger.error('页面加载出错 url {}'.format(failure.request.url))
+        self.logger.info('页面加载出错 url {}'.format(failure.request.url))
         await page.close()
         await page.context.close()
     
@@ -661,7 +663,7 @@ class BilibiliAnimeSpider(Spider):
         self.logger.info('err_video_callback')
         self.logger.info(repr(failure))
         page = failure.request.meta["playwright_page"]
-        self.logger.error('页面加载出错 url {}'.format(failure.request.url))
+        self.logger.info('页面加载出错 url {}'.format(failure.request.url))
         await page.close()
         await page.context.close()
         
@@ -669,7 +671,7 @@ class BilibiliAnimeSpider(Spider):
         self.logger.info('err_up_callback')
         self.logger.info(repr(failure))
         page = failure.request.meta["playwright_page"]
-        self.logger.error('页面加载出错 url {}'.format(failure.request.url))
+        self.logger.info('页面加载出错 url {}'.format(failure.request.url))
         await page.close()
         await page.context.close()
     

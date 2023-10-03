@@ -6,48 +6,11 @@
 
 from scrapy import Item, Field
 
-# 频道新区new rank
-class BilibiliNewRankItem(Item):
-    
-    # 小类区名字
-    area_name : str = Field()
-    # 小类区热门项排行
-    rank_item_order : int = Field()
-    # 热门项视频标题
-    rank_item_title : str = Field()
-    # 热门项视频up名称
-    rank_item_up_name : str = Field()
-    # 热门项视频卡标题
-    rank_video_card_title : str = Field()
-    # 热门项视频卡up名称
-    rank_video_card_up_name : str = Field()
-    # 热门项视频卡发布时间
-    rank_video_card_pubdate : str = Field()
-    # 热门项视频卡播放量
-    rank_video_card_play : str = Field()
-    # 热门项视频卡弹幕量
-    rank_video_card_danmu : str = Field()
-    # 热门项视频卡收藏量
-    rank_video_card_star : str = Field()
-    # 热门项视频卡投币量
-    rank_video_card_coin : str = Field()
-    
-    def to_tuple(self):
-        return (self.area_name, 
-                self.rank_item_order, 
-                self.rank_item_title, 
-                self.rank_item_up_name, 
-                self.rank_video_card_title, 
-                self.rank_video_card_up_name, 
-                self.rank_video_card_pubdate, 
-                self.rank_video_card_play, 
-                self.rank_video_card_danmu, 
-                self.rank_video_card_star, 
-                self.rank_video_card_coin)
-
 # 频道区rank
 class BilibiliRankItem(Item):
     
+    # 频道名称
+    channel_name : str = Field()
     # bv号
     rank_item_bv : str = Field()
     # 小类区名字
