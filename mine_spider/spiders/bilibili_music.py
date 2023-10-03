@@ -286,15 +286,27 @@ class BilibiliMusicSpider(Spider):
         except (TimeoutError, Error):
             self.logger.info('wait for up-info-container timeout')
         
-        up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")        
-        # up主个人空间链接
-        rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()
-        # up主名称
-        rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()
-        # up主简介
-        rank_item_video_detail['video_detail_up_desc'] = up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()
-        # up主被关注数量
-        rank_item_video_detail['video_detail_up_gz'] = up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first().strip()
+        up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
+        if up_info is not None:
+            # up主个人空间链接
+            rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()
+            # up主名称
+            rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()
+            # up主简介
+            rank_item_video_detail['video_detail_up_desc'] = up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()
+            # up主被关注数量
+            rank_item_video_detail['video_detail_up_gz'] = up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first().strip()
+        
+        up_info = selector.xpath("//div[contains(@class, 'members-info-container')]/descendant::div[@class='membersinfo-upcard' and position()=1]")
+        if up_info is not None:
+            # up主个人空间链接
+            rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='staff-info']/a[@class='staff-name']/@href").extract_first()
+            # up主名称
+            rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='staff-info']/a[@class='staff-name']/text()").extract_first().strip()
+            # up主简介
+            rank_item_video_detail['video_detail_up_desc'] = ''
+            # up主被关注数量
+            rank_item_video_detail['video_detail_up_gz'] = ''
         
         try:
             await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 60)
@@ -342,9 +354,12 @@ class BilibiliMusicSpider(Spider):
             """
         )
         await page.wait_for_timeout(3000)
-                        
-        await page.locator(selector = "//div[@class='rec-footer']").wait_for(timeout=1000 * 60)
-        await page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
+        
+        try:
+            await page.locator(selector = "//div[@class='rec-footer']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
+        except (TimeoutError, Error):
+            self.logger.info('waiting for rec-footer timeout')
         
         await page.locator(selector = "//div[@class='left-container-under-player']").wait_for(timeout=1000 * 60)
         await page.locator(selector = "//div[@class='left-container-under-player']").scroll_into_view_if_needed()
@@ -500,7 +515,7 @@ class BilibiliMusicSpider(Spider):
             
             up_gz_fs = await page.locator("//div[@id='navigator']/descendant::div[@class='n-statistics']").inner_html()
             up_gz_fs_selector = Selector(text = up_gz_fs)
-            # up被关注数
+            # up关注数
             bilibiliUpInfo['up_gz'] = up_gz_fs_selector.xpath("//div[@class='n-data n-gz']/p[@id='n-gz']/text()").extract_first().strip()
             # up粉丝数
             bilibiliUpInfo['up_fs'] = up_gz_fs_selector.xpath("//div[@class='n-data n-fs']/p[@id='n-fs']/text()").extract_first().strip()
