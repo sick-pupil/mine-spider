@@ -273,7 +273,6 @@ class BilibiliMusicSpider(Spider):
         video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
         # 视频标题
         rank_item_video_detail['video_detail_title'] = selector.xpath("//div[@id='viewbox_report']/h1[@class='video-title']/text()").extract_first()
-        
         # 视频播放量
         rank_item_video_detail['video_detail_play'] = video_info_detail.xpath("//span[@class='view item']/text()").extract_first().strip()
         # 视频弹幕量
@@ -283,36 +282,45 @@ class BilibiliMusicSpider(Spider):
         
         try:
             await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 60)
+            resp = await page.content()
+            selector = Selector(text = resp)
+            up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
+            if up_info is not None:
+                # up主个人空间链接
+                rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()
+                # up主名称
+                rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()
+                # up主简介
+                rank_item_video_detail['video_detail_up_desc'] = up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()
+                # up主被关注数量
+                rank_item_video_detail['video_detail_up_gz'] = up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first().strip()
         except (TimeoutError, Error):
             self.logger.info('wait for up-info-container timeout')
-        
-        up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
-        if up_info is not None:
-            # up主个人空间链接
-            rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()
-            # up主名称
-            rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()
-            # up主简介
-            rank_item_video_detail['video_detail_up_desc'] = up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()
-            # up主被关注数量
-            rank_item_video_detail['video_detail_up_gz'] = up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first().strip()
-        
-        up_info = selector.xpath("//div[contains(@class, 'members-info-container')]/descendant::div[@class='membersinfo-upcard' and position()=1]")
-        if up_info is not None:
-            # up主个人空间链接
-            rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='staff-info']/a[@class='staff-name']/@href").extract_first()
-            # up主名称
-            rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='staff-info']/a[@class='staff-name']/text()").extract_first().strip()
-            # up主简介
-            rank_item_video_detail['video_detail_up_desc'] = ''
-            # up主被关注数量
-            rank_item_video_detail['video_detail_up_gz'] = ''
+
+        try:
+            await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']").wait_for(timeout=1000 * 60)
+            resp = await page.content()
+            selector = Selector(text = resp)
+            up_info = selector.xpath("//div[contains(@class, 'members-info-container')]/div[@class='membersinfo-normal']/div[@class='container']/div[@class='membersinfo-upcard-wrap' and position()=1]")
+            if up_info is not None:
+                # up主个人空间链接
+                rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='staff-info']/a[contains(@class, 'staff-name')]/@href").extract_first()
+                # up主名称
+                rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='staff-info']/a[contains(@class, 'staff-name')]/text()").extract_first().strip()
+                # up主简介
+                rank_item_video_detail['video_detail_up_desc'] = ''
+                # up主被关注数量
+                rank_item_video_detail['video_detail_up_gz'] = ''
+        except (TimeoutError, Error):
+            self.logger.info('wait for members-info-container timeout')
         
         try:
             await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 60)
         except (TimeoutError, Error):
             self.logger.info('wait for video-toolbar-left timeout')
         
+        resp = await page.content()
+        selector = Selector(text = resp)
         video_toolbar = selector.xpath("//div[@class='video-toolbar-left']")
         # 视频点赞
         rank_item_video_detail['video_detail_like'] = video_toolbar.xpath("//span[@class='video-like-info video-toolbar-item-text']/text()").extract_first()
@@ -365,18 +373,18 @@ class BilibiliMusicSpider(Spider):
         await page.locator(selector = "//div[@class='left-container-under-player']").scroll_into_view_if_needed()
         
         try:
-            await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 15)
-            await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 15)
-            await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 15)
-            await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 15)
+            await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 60)
         except (TimeoutError, Error):
             self.logger.info('waiting for root-reply timeout')
             
         try:
-            await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 15)
-            await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 15)
-            await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 15)
-            await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 15)
+            await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 60)
         except (TimeoutError, Error):
             self.logger.info('waiting for list-item reply-wrap timeout')
                 
