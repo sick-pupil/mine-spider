@@ -93,6 +93,9 @@ class BilibiliAnimePipeline(object):
         pass
         self.logger.info('采集热门项 bv : {}'.format(item['rank_item_bv']))
         self.logger.info('收集热门项信息')
+        
+        self.db_conn.ping(reconnect=True)
+        
         self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
                                                  item['rank_item_bv'], 
                                                  item['block_name'], 
@@ -239,6 +242,9 @@ class BilibiliMusicPipeline(object):
         pass
         self.logger.info('采集热门项 bv : {}'.format(item['rank_item_bv']))
         self.logger.info('收集热门项信息')
+        
+        self.db_conn.ping(reconnect=True)
+        
         self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
                                                  item['rank_item_bv'], 
                                                  item['block_name'], 

@@ -270,6 +270,13 @@ class BilibiliMusicSpider(Spider):
         except (TimeoutError, Error):
             self.logger.info('wait for bui-long-list-item and video-info-detail-list timeout')
         
+        try:
+            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='view item']").wait_for(timeout=1000 * 60)
+            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='dm item']").wait_for(timeout=1000 * 60)
+            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='pubdate-text']").wait_for(timeout=1000 * 60)
+        except (TimeoutError, Error):
+            self.logger.info('wait for view item dm pubdate-text item timeout')
+        
         video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
         # 视频标题
         rank_item_video_detail['video_detail_title'] = selector.xpath("//div[@id='viewbox_report']/h1[@class='video-title']/text()").extract_first()
@@ -282,8 +289,20 @@ class BilibiliMusicSpider(Spider):
         
         try:
             await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 60)
-            resp = await page.content()
-            selector = Selector(text = resp)
+        except (TimeoutError, Error):
+            self.logger.info('wait for up-info-container timeout')
+
+        try:
+            await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+                f.write(await page.content())
+            await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']/a").wait_for(timeout=1000 * 60)
+        except (TimeoutError, Error):
+            self.logger.info('wait for members-info-container timeout')
+        
+        resp = await page.content()
+        selector = Selector(text = resp)
+        if await page.locator("//div[contains(@class, 'up-info-container')]").count() != 0:
             up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
             if up_info is not None:
                 # up主个人空间链接
@@ -294,13 +313,8 @@ class BilibiliMusicSpider(Spider):
                 rank_item_video_detail['video_detail_up_desc'] = up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()
                 # up主被关注数量
                 rank_item_video_detail['video_detail_up_gz'] = up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first().strip()
-        except (TimeoutError, Error):
-            self.logger.info('wait for up-info-container timeout')
-
-        try:
-            await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']").wait_for(timeout=1000 * 60)
-            resp = await page.content()
-            selector = Selector(text = resp)
+        
+        if await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']/a").count() != 0:
             up_info = selector.xpath("//div[contains(@class, 'members-info-container')]/div[@class='membersinfo-normal']/div[@class='container']/div[@class='membersinfo-upcard-wrap' and position()=1]")
             if up_info is not None:
                 # up主个人空间链接
@@ -311,8 +325,6 @@ class BilibiliMusicSpider(Spider):
                 rank_item_video_detail['video_detail_up_desc'] = ''
                 # up主被关注数量
                 rank_item_video_detail['video_detail_up_gz'] = ''
-        except (TimeoutError, Error):
-            self.logger.info('wait for members-info-container timeout')
         
         try:
             await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 60)
@@ -330,7 +342,6 @@ class BilibiliMusicSpider(Spider):
         rank_item_video_detail['video_detail_star'] = video_toolbar.xpath("//span[@class='video-fav-info video-toolbar-item-text']/text()").extract_first()
         # 视频转发
         rank_item_video_detail['video_detail_share'] = video_toolbar.xpath("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]/text()").extract_first()
-        
         
         try:
             await page.locator("//div[@class='left-container-under-player']").wait_for(timeout=1000 * 60)
