@@ -343,6 +343,8 @@ class BilibiliAnimeSpider(Spider):
             await page.context.close()
             return
         
+        await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
+        
         await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 60)
         await page.locator("//div[@class='bui-collapse-header']").hover()
         await page.locator("//div[@class='bui-collapse-header']").click()
@@ -397,12 +399,12 @@ class BilibiliAnimeSpider(Spider):
         rank_item_video_detail['video_detail_pubtime'] = video_info_detail.xpath("//span[@class='pubdate-text']/text()").extract_first().strip()
         
         try:
-            await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 60)
+            await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for up-info-container timeout')
         
         try:
-            await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']/a").wait_for(timeout=1000 * 60)
+            await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']/a").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for members-info-container timeout')
         
@@ -480,6 +482,7 @@ class BilibiliAnimeSpider(Spider):
             });
             """
         )
+        await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
         await page.wait_for_timeout(3000)
                         
         try:
@@ -492,18 +495,18 @@ class BilibiliAnimeSpider(Spider):
         await page.locator(selector = "//div[@class='left-container-under-player']").scroll_into_view_if_needed()
         
         try:
-            await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 60)
-            await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 60)
-            await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 60)
-            await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 30)
+            await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 30)
+            await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 30)
+            await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('waiting for root-reply timeout')
             
         try:
-            await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 60)
-            await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 60)
-            await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 60)
-            await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 60)
+            await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 30)
+            await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 30)
+            await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 30)
+            await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('waiting for list-item reply-wrap timeout')
                 
