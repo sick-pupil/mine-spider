@@ -525,6 +525,11 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 30)
             await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 30)
             await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 30)
+            
+            tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+            while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
+                tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+                continue
         except (TimeoutError, Error):
             self.logger.info('waiting for root-reply timeout')
             
@@ -533,9 +538,14 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 30)
             await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 30)
             await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 30)
+            
+            tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+            while tmp_total_reply is None or tmp_total_reply == '':
+                tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+                continue
         except (TimeoutError, Error):
             self.logger.info('waiting for list-item reply-wrap timeout')
-                
+                        
         resp = await page.content()
         selector = Selector(text = resp)
         
@@ -566,13 +576,9 @@ class BilibiliAnimeSpider(Spider):
                 reply_item['video_reply_like'] = list_item_selector.xpath(".//div[@class='info']/span[@class='like ']/span/text()").extract_first()
                 rank_item_video_reply_list.append(reply_item)
             total_reply = selector.xpath(query = "//li[@class='total-reply']/text()").extract_first()
-            
-        rank_item_video_detail['video_detail_hot_replys'] = rank_item_video_reply_list
-        if total_reply is not None and total_reply != '':
-            rank_item_video_detail['video_detail_reply'] = total_reply
-        else:
-            rank_item_video_detail['video_detail_reply'] = ''
-        
+
+        rank_item_video_detail['video_detail_reply'] = total_reply
+
         animeRankItem = self.result_by_dict[rank_item_bv]
         animeRankItem['rank_item_video_detail'] = rank_item_video_detail
                 
