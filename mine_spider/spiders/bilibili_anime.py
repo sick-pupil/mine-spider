@@ -340,13 +340,6 @@ class BilibiliAnimeSpider(Spider):
             await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for networkidle timeout')
-            
-        page_url = page.url
-        if 'video/BV' not in page_url:
-            self.result_by_dict.pop(rank_item_bv)
-            await page.close()
-            await page.context.close()
-            return
         
         try:
             await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
@@ -356,6 +349,14 @@ class BilibiliAnimeSpider(Spider):
             self.logger.info('wait for switch-button timeout')
         
         await page.wait_for_timeout(3000)
+        
+        
+        page_url = page.url
+        if 'video/BV' not in page_url:
+            self.result_by_dict.pop(rank_item_bv)
+            await page.close()
+            await page.context.close()
+            return
         
         
         await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
@@ -534,7 +535,7 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 30)
             await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 30)
             
-            await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
             #tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
             #while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
             #    tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
@@ -548,7 +549,7 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 30)
             await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 30)
             
-            await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
             #tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
             #while tmp_total_reply is None or tmp_total_reply == '':
             #    tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
