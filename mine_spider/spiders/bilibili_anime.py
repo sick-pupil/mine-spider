@@ -330,13 +330,6 @@ class BilibiliAnimeSpider(Spider):
         
         page = response.meta['playwright_page']
         
-        page_url = page.url
-        if 'video/BV' not in page_url:
-            self.result_by_dict.pop(rank_item_bv)
-            await page.close()
-            await page.context.close()
-            return
-        
         await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 30)
         await page.evaluate('''() => {
             let elements = document.querySelectorAll('.bpx-player-video-area');
@@ -347,6 +340,13 @@ class BilibiliAnimeSpider(Spider):
             await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for networkidle timeout')
+            
+        page_url = page.url
+        if 'video/BV' not in page_url:
+            self.result_by_dict.pop(rank_item_bv)
+            await page.close()
+            await page.context.close()
+            return
         
         try:
             await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)

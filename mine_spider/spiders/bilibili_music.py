@@ -187,29 +187,28 @@ class BilibiliMusicSpider(Spider):
             rank_item_href = musicRankItem['rank_item_href']
             rank_item_bv = musicRankItem['rank_item_bv']
             
-            if 'BV1Kz4y1G79K' in rank_item_bv:
-                yield Request(url = self.url_prefix + rank_item_href,
-                    meta = {
-                        'playwright': True, 
-                        'playwright_context': 'bilibili-music-video-{}'.format(rank_item_bv), 
-                        'playwright_context_kwargs': {
-                            'ignore_https_errors': True,
-                        },
-                        'playwright_page_goto_kwargs': {
-                            'wait_until': 'load',
-                            'timeout': 1000 * 60 * 30,
-                        },
-                        "playwright_page_methods": [
-                            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                            PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
-                        ],
-                        'playwright_include_page': True,
-                    }, 
-                    callback = self.music_video_parse,
-                    errback = self.err_video_callback,
-                    dont_filter = True,
-                    cb_kwargs = dict(rank_item_bv=rank_item_bv)
-                )
+            yield Request(url = self.url_prefix + rank_item_href,
+                meta = {
+                    'playwright': True, 
+                    'playwright_context': 'bilibili-music-video-{}'.format(rank_item_bv), 
+                    'playwright_context_kwargs': {
+                        'ignore_https_errors': True,
+                    },
+                    'playwright_page_goto_kwargs': {
+                        'wait_until': 'load',
+                        'timeout': 1000 * 60 * 30,
+                    },
+                    "playwright_page_methods": [
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                    ],
+                    'playwright_include_page': True,
+                }, 
+                callback = self.music_video_parse,
+                errback = self.err_video_callback,
+                dont_filter = True,
+                cb_kwargs = dict(rank_item_bv=rank_item_bv)
+            )
         
         await page.close()
         await page.context.close()
@@ -223,13 +222,6 @@ class BilibiliMusicSpider(Spider):
         
         page = response.meta['playwright_page']
         
-        page_url = page.url
-        if 'video/BV' not in page_url:
-            self.result_by_dict.pop(rank_item_bv)
-            await page.close()
-            await page.context.close()
-            return
-        
         await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 30)
         await page.evaluate('''() => {
             let elements = document.querySelectorAll('.bpx-player-video-area');
@@ -240,6 +232,13 @@ class BilibiliMusicSpider(Spider):
             await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for networkidle timeout')
+            
+        page_url = page.url
+        if 'video/BV' not in page_url:
+            self.result_by_dict.pop(rank_item_bv)
+            await page.close()
+            await page.context.close()
+            return
         
         try:
             await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
@@ -249,7 +248,7 @@ class BilibiliMusicSpider(Spider):
             self.logger.info('wait for switch-button timeout')
         
         await page.wait_for_timeout(3000)
-            
+        
         
         await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
         await page.locator("//div[@class='bui-collapse-header']").hover()
