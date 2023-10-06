@@ -349,7 +349,6 @@ class BilibiliAnimeSpider(Spider):
             self.logger.info('wait for switch-button timeout')
         
         await page.wait_for_timeout(3000)
-        await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
             
         page_url = page.url
         if 'BV' not in page_url and 'video' not in page_url:
@@ -475,13 +474,21 @@ class BilibiliAnimeSpider(Spider):
         rank_item_video_detail['video_detail_share'] = video_toolbar.xpath("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]/text()").extract_first()
         
         
-        await page.evaluate("""
-            window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: 'smooth',
-            });
-            """
-        )
+        #await page.evaluate("""
+        #    window.scrollTo({
+        #        top: document.body.scrollHeight,
+        #        behavior: 'smooth',
+        #    });
+        #    """
+        #)
+        await page.evaluate('''async (delay) => {
+            const scrollHeight = document.body.scrollHeight;
+            const scrollStep = scrollHeight / 100;
+            for(let i = 0; i < 100; i++) {
+                window.scrollBy(0, scrollStep);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }''', 100)
         try:
             await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
         except (TimeoutError, Error):
@@ -526,10 +533,11 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 30)
             await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 30)
             
-            tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
-            while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
-                tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
-                continue
+            await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            #tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+            #while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
+            #    tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+            #    continue
         except (TimeoutError, Error):
             self.logger.info('waiting for root-reply timeout')
             
@@ -539,10 +547,11 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 30)
             await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 30)
             
-            tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
-            while tmp_total_reply is None or tmp_total_reply == '':
-                tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
-                continue
+            await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            #tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+            #while tmp_total_reply is None or tmp_total_reply == '':
+            #    tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+            #    continue
         except (TimeoutError, Error):
             self.logger.info('waiting for list-item reply-wrap timeout')
                         
@@ -578,6 +587,7 @@ class BilibiliAnimeSpider(Spider):
             total_reply = selector.xpath(query = "//li[@class='total-reply']/text()").extract_first()
 
         rank_item_video_detail['video_detail_reply'] = total_reply
+        rank_item_video_detail['video_detail_hot_replys'] = rank_item_video_reply_list
 
         animeRankItem = self.result_by_dict[rank_item_bv]
         animeRankItem['rank_item_video_detail'] = rank_item_video_detail

@@ -102,8 +102,6 @@ class BilibiliAnimePipeline(object):
     
     def close_spider(self, spider):
         pass
-        self.db_cursor.close()
-        self.db_conn.close()
     
     def process_item(self, item, spider):
         # 数据入库
@@ -116,6 +114,7 @@ class BilibiliAnimePipeline(object):
         
         #self.db_conn.ping(reconnect=True)
         try:
+            pass
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
                                                      item['rank_item_bv'], 
                                                      item['block_name'], 
@@ -131,8 +130,8 @@ class BilibiliAnimePipeline(object):
                                                      item['rank_item_danmu'], 
                                                      item['rank_item_star'], 
                                                      item['rank_item_coin']))
-            
-            
+        
+        
             self.logger.info('收集视频详情信息')
             self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
@@ -189,6 +188,9 @@ class BilibiliAnimePipeline(object):
         except Exception as e:
             self.logger.error(repr(e))
             self.db_conn.rollback()
+        finally:
+            self.db_cursor.close()
+            self.db_conn.close()
         
         return item
 
@@ -277,8 +279,6 @@ class BilibiliMusicPipeline(object):
     
     def close_spider(self, spider):
         pass
-        self.db_cursor.close()
-        self.db_conn.close()
     
     def process_item(self, item, spider):
         # 数据入库
@@ -290,8 +290,16 @@ class BilibiliMusicPipeline(object):
         self.db_cursor = self.db_conn.cursor()
         
         #self.db_conn.ping(reconnect=True)
-        try:
-            self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
+        #try:
+        #    pass
+        #except Exception as e:
+        #    self.logger.error(repr(e))
+        #    self.db_conn.rollback()
+        #finally:
+        #    self.db_cursor.close()
+        #    self.db_conn.close()
+            
+        self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
                                                      item['rank_item_bv'], 
                                                      item['block_name'], 
                                                      item['rank_item_num'], 
@@ -305,53 +313,53 @@ class BilibiliMusicPipeline(object):
                                                      item['rank_item_coin']))
             
             
-            self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
-                                                     item['rank_item_video_detail']['video_detail_title'], 
-                                                     item['rank_item_video_detail']['video_detail_play'], 
-                                                     item['rank_item_video_detail']['video_detail_danmu'], 
-                                                     item['rank_item_video_detail']['video_detail_pubtime'], 
-                                                     item['rank_item_video_detail']['video_detail_like'], 
-                                                     item['rank_item_video_detail']['video_detail_coin'], 
-                                                     item['rank_item_video_detail']['video_detail_star'], 
-                                                     item['rank_item_video_detail']['video_detail_share'], 
-                                                     item['rank_item_video_detail']['video_detail_desc'], 
-                                                     item['rank_item_video_detail']['video_detail_reply'], 
-                                                     item['rank_item_video_detail']['video_detail_up_link'], 
-                                                     item['rank_item_video_detail']['video_detail_up_name'], 
-                                                     item['rank_item_video_detail']['video_detail_up_desc'],
-                                                     item['rank_item_video_detail']['video_detail_up_gz']))
-            
-            
-            self.logger.info('收集视频评论详情信息')
-            reply_tuple_list = list()
-            for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
-                reply_tuple_list.append(reply_tuple)
-            self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
-            
-            
-            self.logger.info('收集视频弹幕详情信息')
-            danmu_tuple_list = list()
-            for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
-                danmu_tuple_list.append(danmu_tuple)
-            self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
-            
-            
-            self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
-                                                     item['rank_item_up_detail']['up_uid'], 
-                                                     item['rank_item_up_detail']['up_name'], 
-                                                     item['rank_item_up_detail']['up_desc'], 
-                                                     item['rank_item_up_detail']['up_gz'], 
-                                                     item['rank_item_up_detail']['up_fs'], 
-                                                     item['rank_item_up_detail']['up_tg'], 
-                                                     item['rank_item_up_detail']['up_hj']))
-            
-            self.db_conn.commit()
-        except Exception as e:
-            self.logger.error(repr(e))
-            self.db_conn.rollback()
+        self.logger.info('收集视频详情信息')
+        self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+                                                 item['rank_item_video_detail']['video_detail_title'], 
+                                                 item['rank_item_video_detail']['video_detail_play'], 
+                                                 item['rank_item_video_detail']['video_detail_danmu'], 
+                                                 item['rank_item_video_detail']['video_detail_pubtime'], 
+                                                 item['rank_item_video_detail']['video_detail_like'], 
+                                                 item['rank_item_video_detail']['video_detail_coin'], 
+                                                 item['rank_item_video_detail']['video_detail_star'], 
+                                                 item['rank_item_video_detail']['video_detail_share'], 
+                                                 item['rank_item_video_detail']['video_detail_desc'], 
+                                                 item['rank_item_video_detail']['video_detail_reply'], 
+                                                 item['rank_item_video_detail']['video_detail_up_link'], 
+                                                 item['rank_item_video_detail']['video_detail_up_name'], 
+                                                 item['rank_item_video_detail']['video_detail_up_desc'],
+                                                 item['rank_item_video_detail']['video_detail_up_gz']))
+        
+        
+        self.logger.info('收集视频评论详情信息')
+        reply_tuple_list = list()
+        for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
+            reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+            reply_tuple_list.append(reply_tuple)
+        self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
+        
+        
+        self.logger.info('收集视频弹幕详情信息')
+        danmu_tuple_list = list()
+        for danmu in item['rank_item_video_detail']['video_detail_danmus']:
+            danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+            danmu_tuple_list.append(danmu_tuple)
+        self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
+        
+        
+        self.logger.info('收集视频发布人up详情信息')
+        self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+                                                 item['rank_item_up_detail']['up_uid'], 
+                                                 item['rank_item_up_detail']['up_name'], 
+                                                 item['rank_item_up_detail']['up_desc'], 
+                                                 item['rank_item_up_detail']['up_gz'], 
+                                                 item['rank_item_up_detail']['up_fs'], 
+                                                 item['rank_item_up_detail']['up_tg'], 
+                                                 item['rank_item_up_detail']['up_hj']))
+        
+        self.db_conn.commit()
+        
+        self.db_cursor.close()
+        self.db_conn.close()
         
         return item
