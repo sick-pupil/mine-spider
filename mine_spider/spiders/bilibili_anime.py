@@ -330,6 +330,13 @@ class BilibiliAnimeSpider(Spider):
         
         page = response.meta['playwright_page']
         
+        page_url = page.url
+        if 'video/BV' not in page_url:
+            self.result_by_dict.pop(rank_item_bv)
+            await page.close()
+            await page.context.close()
+            return
+        
         await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 30)
         await page.evaluate('''() => {
             let elements = document.querySelectorAll('.bpx-player-video-area');
@@ -349,13 +356,7 @@ class BilibiliAnimeSpider(Spider):
             self.logger.info('wait for switch-button timeout')
         
         await page.wait_for_timeout(3000)
-            
-        page_url = page.url
-        if 'BV' not in page_url and 'video' not in page_url:
-            self.result_by_dict.pop(rank_item_bv)
-            await page.close()
-            await page.context.close()
-            return
+        
         
         await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
         await page.locator("//div[@class='bui-collapse-header']").hover()
@@ -586,7 +587,11 @@ class BilibiliAnimeSpider(Spider):
                 rank_item_video_reply_list.append(reply_item)
             total_reply = selector.xpath(query = "//li[@class='total-reply']/text()").extract_first()
 
-        rank_item_video_detail['video_detail_reply'] = total_reply
+        if total_reply is not None or total_reply != '':
+            rank_item_video_detail['video_detail_reply'] = total_reply
+        else:
+            rank_item_video_detail['video_detail_reply'] = ''
+        
         rank_item_video_detail['video_detail_hot_replys'] = rank_item_video_reply_list
 
         animeRankItem = self.result_by_dict[rank_item_bv]

@@ -187,7 +187,7 @@ class BilibiliMusicSpider(Spider):
             rank_item_href = musicRankItem['rank_item_href']
             rank_item_bv = musicRankItem['rank_item_bv']
             
-            if rank_item_bv == 'BV1W841117oY':
+            if 'BV1Kz4y1G79K' in rank_item_bv:
                 yield Request(url = self.url_prefix + rank_item_href,
                     meta = {
                         'playwright': True, 
@@ -223,6 +223,13 @@ class BilibiliMusicSpider(Spider):
         
         page = response.meta['playwright_page']
         
+        page_url = page.url
+        if 'video/BV' not in page_url:
+            self.result_by_dict.pop(rank_item_bv)
+            await page.close()
+            await page.context.close()
+            return
+        
         await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 30)
         await page.evaluate('''() => {
             let elements = document.querySelectorAll('.bpx-player-video-area');
@@ -243,12 +250,6 @@ class BilibiliMusicSpider(Spider):
         
         await page.wait_for_timeout(3000)
             
-        page_url = page.url
-        if 'BV' not in page_url and 'video' not in page_url:
-            self.result_by_dict.pop(rank_item_bv)
-            await page.close()
-            await page.context.close()
-            return
         
         await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
         await page.locator("//div[@class='bui-collapse-header']").hover()
@@ -427,6 +428,8 @@ class BilibiliMusicSpider(Spider):
             await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 30)
             
             await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+                f.write(await page.content())
             #tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
             #while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
             #    tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
@@ -441,6 +444,8 @@ class BilibiliMusicSpider(Spider):
             await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 30)
             
             await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+                f.write(await page.content())
             #tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
             #while tmp_total_reply is None or tmp_total_reply == '':
             #    tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
@@ -478,8 +483,12 @@ class BilibiliMusicSpider(Spider):
                 reply_item['video_reply_like'] = list_item_selector.xpath(".//div[@class='info']/span[@class='like ']/span/text()").extract_first()
                 rank_item_video_reply_list.append(reply_item)
             total_reply = selector.xpath(query = "//li[@class='total-reply']/text()").extract_first()
-            
-        rank_item_video_detail['video_detail_reply'] = total_reply
+        
+        if total_reply is not None or total_reply != '':
+            rank_item_video_detail['video_detail_reply'] = total_reply
+        else:
+            rank_item_video_detail['video_detail_reply'] = ''
+        
         rank_item_video_detail['video_detail_hot_replys'] = rank_item_video_reply_list
         
         musicRankItem = self.result_by_dict[rank_item_bv]
