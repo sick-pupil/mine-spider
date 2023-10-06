@@ -330,12 +330,27 @@ class BilibiliAnimeSpider(Spider):
         
         page = response.meta['playwright_page']
         
-        await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 60)
+        await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 30)
         await page.evaluate('''() => {
             let elements = document.querySelectorAll('.bpx-player-video-area');
             elements.forEach(element => element.parentNode.removeChild(element));
         }''')
         
+        try:
+            await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
+        except (TimeoutError, Error):
+            self.logger.info('wait for networkidle timeout')
+        
+        try:
+            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
+            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).hover()
+            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).click()
+        except (TimeoutError, Error):
+            self.logger.info('wait for switch-button timeout')
+        
+        await page.wait_for_timeout(3000)
+        await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            
         page_url = page.url
         if 'BV' not in page_url and 'video' not in page_url:
             self.result_by_dict.pop(rank_item_bv)
@@ -343,15 +358,13 @@ class BilibiliAnimeSpider(Spider):
             await page.context.close()
             return
         
-        await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
-        
-        await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 60)
+        await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
         await page.locator("//div[@class='bui-collapse-header']").hover()
         await page.locator("//div[@class='bui-collapse-header']").click()
-        await page.locator("//div[@class='bui-collapse-body']").wait_for(timeout=1000 * 60)
+        await page.locator("//div[@class='bui-collapse-body']").wait_for(timeout=1000 * 30)
                 
         try:
-            await page.locator("//div[@class='dm-info-row ']").first.wait_for(timeout=1000 * 60)
+            await page.locator("//div[@class='dm-info-row ']").first.wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for dm-info-row  timeout')
         
@@ -375,22 +388,21 @@ class BilibiliAnimeSpider(Spider):
         rank_item_video_detail['video_detail_danmus'] = rank_item_video_danmu_list
         
         try:
-            await page.locator("//div[@id='viewbox_report']/h1[@class='video-title']").wait_for(timeout=1000 * 60)
-            await page.locator("//div[@class='video-info-detail-list']").wait_for(timeout=1000 * 60)
+            await page.locator("//div[@id='viewbox_report']/h1[@class='video-title']").wait_for(timeout=1000 * 30)
+            await page.locator("//div[@class='video-info-detail-list']").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for bui-long-list-item and video-info-detail-list timeout')
         
         try:
-            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='view item']").wait_for(timeout=1000 * 60)
-            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='dm item']").wait_for(timeout=1000 * 60)
-            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='pubdate-text']").wait_for(timeout=1000 * 60)
+            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='view item']").wait_for(timeout=1000 * 30)
+            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='dm item']").wait_for(timeout=1000 * 30)
+            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='pubdate-text']").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for view item dm pubdate-text item timeout')
         
         video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
         # 视频标题
         rank_item_video_detail['video_detail_title'] = selector.xpath("//div[@id='viewbox_report']/h1[@class='video-title']/text()").extract_first()
-        
         # 视频播放量
         rank_item_video_detail['video_detail_play'] = video_info_detail.xpath("//span[@class='view item']/text()").extract_first().strip()
         # 视频弹幕量
@@ -435,10 +447,20 @@ class BilibiliAnimeSpider(Spider):
                 # up主被关注数量
                 rank_item_video_detail['video_detail_up_gz'] = ''
         
+        
         try:
-            await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 60)
+            await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for video-toolbar-left timeout')
+        
+        try:
+            await page.locator("//span[@class='video-like-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
+            await page.locator("//span[@class='video-coin-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
+            await page.locator("//span[@class='video-fav-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
+            await page.locator("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]").wait_for(timeout=1000 * 30)
+        except (TimeoutError, Error):
+            self.logger.info('wait for video-like-info video-coin-info video-fav-info video-share-info timeout')
+
         
         resp = await page.content()
         selector = Selector(text = resp)
@@ -453,15 +475,37 @@ class BilibiliAnimeSpider(Spider):
         rank_item_video_detail['video_detail_share'] = video_toolbar.xpath("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]/text()").extract_first()
         
         
+        await page.evaluate("""
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth',
+            });
+            """
+        )
         try:
-            await page.locator("//div[@class='left-container-under-player']").wait_for(timeout=1000 * 60)
+            await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
+        except (TimeoutError, Error):
+            self.logger.info('wait for networkidle timeout')
+        await page.wait_for_timeout(3000)
+        
+        
+        try:
+            await page.locator("//div[@class='left-container-under-player']").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for left-container-under-player timeout')
+            
+        try:
+            await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']").wait_for(timeout=1000 * 10)
+            await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']").wait_for(timeout=1000 * 10)
+            await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']").wait_for(timeout=1000 * 10)
+        except (TimeoutError, Error):
+            self.logger.info('wait for tag not-btn-tag timeout')
         
+        resp = await page.content()
+        selector = Selector(text = resp)
         under_video_container = selector.xpath("//div[@class='left-container-under-player']")
         rank_item_video_detail['video_detail_desc'] = under_video_container.xpath("//span[@class='desc-info-text']/text()").extract_first()
         rank_item_video_tag_list : list = []
-        
         
         for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']/text()"):
             # 视频标签
@@ -475,24 +519,6 @@ class BilibiliAnimeSpider(Spider):
         
         rank_item_video_detail['video_detail_tags'] = rank_item_video_tag_list
         
-        await page.evaluate("""
-            window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: 'smooth',
-            });
-            """
-        )
-        await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
-        await page.wait_for_timeout(3000)
-                        
-        try:
-            await page.locator(selector = "//div[@class='rec-footer']").wait_for(timeout=1000 * 60)
-            await page.locator(selector = "//div[@class='rec-footer']").scroll_into_view_if_needed()
-        except (TimeoutError, Error):
-            self.logger.info('waiting for rec-footer timeout')
-        
-        await page.locator(selector = "//div[@class='left-container-under-player']").wait_for(timeout=1000 * 60)
-        await page.locator(selector = "//div[@class='left-container-under-player']").scroll_into_view_if_needed()
         
         try:
             await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 30)
@@ -519,7 +545,8 @@ class BilibiliAnimeSpider(Spider):
             for list_item_selector in selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']"):
                 reply_item = BilibiliVideoReply()
                 # 评论内容
-                reply_item['video_reply_context'] = list_item_selector.xpath(".//span[@class='reply-content']/text()").extract_first()
+                #reply_item['video_reply_context'] = list_item_selector.xpath(".//span[@class='reply-content']/text()").extract_first()
+                reply_item['video_reply_context'] = list_item_selector.xpath("string(.//span[@class='reply-content'])").extract_first()
                 # 评论时间
                 reply_item['video_reply_time'] = list_item_selector.xpath(".//span[@class='reply-time']/text()").extract_first()
                 # 评论被点赞数
@@ -531,7 +558,8 @@ class BilibiliAnimeSpider(Spider):
             for list_item_selector in selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']"):
                 reply_item = BilibiliVideoReply()
                 # 评论内容
-                reply_item['video_reply_context'] = list_item_selector.xpath(".//p[@class='text']/text()").extract_first()
+                #reply_item['video_reply_context'] = list_item_selector.xpath(".//p[@class='text']/text()").extract_first()
+                reply_item['video_reply_context'] = list_item_selector.xpath("string(.//p[@class='text'])").extract_first()
                 # 评论时间
                 reply_item['video_reply_time'] = list_item_selector.xpath(".//div[@class='info']/span[@class='time-location']/span[@class='reply-time']/text()").extract_first()
                 # 评论被点赞数
@@ -540,7 +568,10 @@ class BilibiliAnimeSpider(Spider):
             total_reply = selector.xpath(query = "//li[@class='total-reply']/text()").extract_first()
             
         rank_item_video_detail['video_detail_hot_replys'] = rank_item_video_reply_list
-        rank_item_video_detail['video_detail_reply'] = total_reply
+        if total_reply is not None and total_reply != '':
+            rank_item_video_detail['video_detail_reply'] = total_reply
+        else:
+            rank_item_video_detail['video_detail_reply'] = ''
         
         animeRankItem = self.result_by_dict[rank_item_bv]
         animeRankItem['rank_item_video_detail'] = rank_item_video_detail
