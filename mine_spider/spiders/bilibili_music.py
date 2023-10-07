@@ -47,11 +47,11 @@ class BilibiliMusicSpider(Spider):
                 },
                 'playwright_page_goto_kwargs': {
                     'wait_until': 'load',
-                    'timeout': 1000 * 60 * 30,
+                    'timeout': 1000 * 60 * 15,
                 },
                 "playwright_page_methods": [
-                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                    PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 15),
+                    PageMethod("set_default_timeout", timeout=1000 * 60 * 15),
                 ],
                 'playwright_include_page': True,
             }, 
@@ -82,11 +82,11 @@ class BilibiliMusicSpider(Spider):
                     },
                     'playwright_page_goto_kwargs': {
                         'wait_until': 'load',
-                        'timeout': 1000 * 60 * 30,
+                        'timeout': 1000 * 60 * 15,
                     },
                     "playwright_page_methods": [
-                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                        PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 15),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 15),
                     ],
                     'playwright_include_page': True,
                 }, 
@@ -196,11 +196,11 @@ class BilibiliMusicSpider(Spider):
                     },
                     'playwright_page_goto_kwargs': {
                         'wait_until': 'load',
-                        'timeout': 1000 * 60 * 30,
+                        'timeout': 1000 * 60 * 10,
                     },
                     "playwright_page_methods": [
-                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                        PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
                     ],
                     'playwright_include_page': True,
                 }, 
@@ -531,29 +531,29 @@ class BilibiliMusicSpider(Spider):
         #self.logger.info('视频发布人简介 : {}'.format(rank_item_video_detail['video_detail_up_desc']))
         #self.logger.info('视频发布人被关注数量 : {}'.format(rank_item_video_detail['video_detail_up_gz']))
                 
-        #up_link_id = rank_item_video_detail['video_detail_up_link'].split('/')[3]
-        #yield Request(url = self.url_prefix + rank_item_video_detail['video_detail_up_link'],
-        #    meta = {
-        #        'playwright': True, 
-        #        'playwright_context': 'video-up-{}-{}-{}'.format(rank_item_bv, up_link_id, datetime.now().strftime("%Y%m%d%H%M%S")), 
-        #        'playwright_context_kwargs': {
-        #            'ignore_https_errors': True,
-        #         },
-        #        'playwright_page_goto_kwargs': {
-        #            'wait_until': 'networkidle',
-        #            'timeout': 1000 * 60 * 30,
-        #        },
-        #        "playwright_page_methods": [
-        #            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-        #            PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
-        #        ],
-        #        'playwright_include_page': True,
-        #    }, 
-        #    callback = self.up_info_parse,
-        #    errback = self.err_up_callback,
-        #    dont_filter = True,
-        #    cb_kwargs = dict(video_bv=rank_item_bv, up_link_id=up_link_id)
-        #)
+        up_link_id = rank_item_video_detail['video_detail_up_link'].split('/')[3]
+        yield Request(url = self.url_prefix + rank_item_video_detail['video_detail_up_link'],
+            meta = {
+                'playwright': True, 
+                'playwright_context': 'video-up-{}-{}-{}'.format(rank_item_bv, up_link_id, datetime.now().strftime("%Y%m%d%H%M%S")), 
+                'playwright_context_kwargs': {
+                    'ignore_https_errors': True,
+                 },
+                'playwright_page_goto_kwargs': {
+                    'wait_until': 'networkidle',
+                    'timeout': 1000 * 60 * 10,
+                },
+                "playwright_page_methods": [
+                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                    PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
+                ],
+                'playwright_include_page': True,
+            }, 
+            callback = self.up_info_parse,
+            errback = self.err_up_callback,
+            dont_filter = True,
+            cb_kwargs = dict(video_bv=rank_item_bv, up_link_id=up_link_id)
+        )
         
         #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
         #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
@@ -628,11 +628,11 @@ class BilibiliMusicSpider(Spider):
                      },
                     'playwright_page_goto_kwargs': {
                         'wait_until': 'networkidle',
-                        'timeout': 1000 * 60 * 30,
+                        'timeout': 1000 * 60 * 10,
                     },
                     "playwright_page_methods": [
-                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                        PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
                     ],
                     'playwright_include_page': True,
                 }, 

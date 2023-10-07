@@ -52,8 +52,8 @@ class BilibiliAnimeSpider(Spider):
                     'timeout': 1000 * 60 * 30,
                 },
                 "playwright_page_methods": [
-                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                    PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 15),
+                    PageMethod("set_default_timeout", timeout=1000 * 60 * 15),
                 ],
                 'playwright_include_page': True,
             }, 
@@ -84,11 +84,11 @@ class BilibiliAnimeSpider(Spider):
                     },
                     'playwright_page_goto_kwargs': {
                         'wait_until': 'load',
-                        'timeout': 1000 * 60 * 30,
+                        'timeout': 1000 * 60 * 15,
                     },
                     "playwright_page_methods": [
-                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                        PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 15),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 15),
                     ],
                     'playwright_include_page': True,
                 }, 
@@ -288,11 +288,11 @@ class BilibiliAnimeSpider(Spider):
                         },
                         'playwright_page_goto_kwargs': {
                             'wait_until': 'load',
-                            'timeout': 1000 * 60 * 30,
+                            'timeout': 1000 * 60 * 10,
                         },
                         "playwright_page_methods": [
-                            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                            PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                            PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
                         ],
                         'playwright_include_page': True,
                     }, 
@@ -640,11 +640,11 @@ class BilibiliAnimeSpider(Spider):
                  },
                 'playwright_page_goto_kwargs': {
                     'wait_until': 'networkidle',
-                    'timeout': 1000 * 60 * 30,
+                    'timeout': 1000 * 60 * 10,
                 },
                 "playwright_page_methods": [
-                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                    PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                    PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
                 ],
                 'playwright_include_page': True,
             }, 
@@ -727,11 +727,11 @@ class BilibiliAnimeSpider(Spider):
                      },
                     'playwright_page_goto_kwargs': {
                         'wait_until': 'networkidle',
-                        'timeout': 1000 * 60 * 30,
+                        'timeout': 1000 * 60 * 10,
                     },
                     "playwright_page_methods": [
-                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                        PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
                     ],
                     'playwright_include_page': True,
                 }, 
