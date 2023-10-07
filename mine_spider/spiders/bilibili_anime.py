@@ -25,7 +25,7 @@ class BilibiliAnimeSpider(Spider):
         'PLAYWRIGHT_LAUNCH_OPTIONS': {'headless': True, 'timeout': 1000 * 60 * 60 * 3}, 
         'PLAYWRIGHT_MAX_CONTEXTS': 1,
         'PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT': 1000 * 60 * 60 * 3,
-        'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 50,
+        'PLAYWRIGHT_MAX_PAGES_PER_CONTEXT': 1,
         'ITEM_PIPELINES': {
             'mine_spider.pipelines.BilibiliAnimePipeline': 500
         },
