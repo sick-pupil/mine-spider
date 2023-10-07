@@ -536,10 +536,11 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 30)
             
             #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-            #tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
-            #while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
-            #    tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
-            #    continue
+            tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+            while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
+                self.logger.info('waiting for span total-reply text')
+                tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+                continue
         except (TimeoutError, Error):
             self.logger.info('waiting for root-reply timeout')
             
@@ -550,13 +551,15 @@ class BilibiliAnimeSpider(Spider):
             await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 30)
             
             #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-            #tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
-            #while tmp_total_reply is None or tmp_total_reply == '':
-            #    tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
-            #    continue
+            tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+            while tmp_total_reply is None or tmp_total_reply == '':
+                self.logger.info('waiting for li total-reply text')
+                tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+                continue
         except (TimeoutError, Error):
             self.logger.info('waiting for list-item reply-wrap timeout')
-                        
+        
+        await page.wait_for_timeout(1000)
         resp = await page.content()
         selector = Selector(text = resp)
         

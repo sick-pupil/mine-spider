@@ -430,10 +430,11 @@ class BilibiliMusicSpider(Spider):
             #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
             #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
             #    f.write(await page.content())
-            #tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
-            #while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
-            #    tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
-            #    continue
+            tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+            while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
+                self.logger.info('waiting for span total-reply text')
+                tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+                continue
         except (TimeoutError, Error):
             self.logger.info('waiting for root-reply timeout')
             
@@ -446,13 +447,15 @@ class BilibiliMusicSpider(Spider):
             #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
             #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
             #    f.write(await page.content())
-            #tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
-            #while tmp_total_reply is None or tmp_total_reply == '':
-            #    tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
-            #    continue
+            tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+            while tmp_total_reply is None or tmp_total_reply == '':
+                self.logger.info('waiting for li total-reply text')
+                tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+                continue
         except (TimeoutError, Error):
             self.logger.info('waiting for list-item reply-wrap timeout')
-                
+        
+        await page.wait_for_timeout(1000)
         resp = await page.content()
         selector = Selector(text = resp)
         
@@ -493,6 +496,11 @@ class BilibiliMusicSpider(Spider):
         
         musicRankItem = self.result_by_dict[rank_item_bv]
         musicRankItem['rank_item_video_detail'] = rank_item_video_detail
+        
+        #if musicRankItem['rank_item_video_detail']['video_detail_reply'] is None or musicRankItem['rank_item_video_detail']['video_detail_reply'] == '':
+        #    await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+        #    with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+        #        f.write(await page.content())
                 
         # 输出日志
         #self.logger.info('视频标题 : {}'.format(rank_item_video_detail['video_detail_title']))
@@ -523,29 +531,29 @@ class BilibiliMusicSpider(Spider):
         #self.logger.info('视频发布人简介 : {}'.format(rank_item_video_detail['video_detail_up_desc']))
         #self.logger.info('视频发布人被关注数量 : {}'.format(rank_item_video_detail['video_detail_up_gz']))
                 
-        up_link_id = rank_item_video_detail['video_detail_up_link'].split('/')[3]
-        yield Request(url = self.url_prefix + rank_item_video_detail['video_detail_up_link'],
-            meta = {
-                'playwright': True, 
-                'playwright_context': 'video-up-{}-{}-{}'.format(rank_item_bv, up_link_id, datetime.now().strftime("%Y%m%d%H%M%S")), 
-                'playwright_context_kwargs': {
-                    'ignore_https_errors': True,
-                 },
-                'playwright_page_goto_kwargs': {
-                    'wait_until': 'networkidle',
-                    'timeout': 1000 * 60 * 30,
-                },
-                "playwright_page_methods": [
-                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
-                    PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
-                ],
-                'playwright_include_page': True,
-            }, 
-            callback = self.up_info_parse,
-            errback = self.err_up_callback,
-            dont_filter = True,
-            cb_kwargs = dict(video_bv=rank_item_bv, up_link_id=up_link_id)
-        )
+        #up_link_id = rank_item_video_detail['video_detail_up_link'].split('/')[3]
+        #yield Request(url = self.url_prefix + rank_item_video_detail['video_detail_up_link'],
+        #    meta = {
+        #        'playwright': True, 
+        #        'playwright_context': 'video-up-{}-{}-{}'.format(rank_item_bv, up_link_id, datetime.now().strftime("%Y%m%d%H%M%S")), 
+        #        'playwright_context_kwargs': {
+        #            'ignore_https_errors': True,
+        #         },
+        #        'playwright_page_goto_kwargs': {
+        #            'wait_until': 'networkidle',
+        #            'timeout': 1000 * 60 * 30,
+        #        },
+        #        "playwright_page_methods": [
+        #            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 30),
+        #            PageMethod("set_default_timeout", timeout=1000 * 60 * 30),
+        #        ],
+        #        'playwright_include_page': True,
+        #    }, 
+        #    callback = self.up_info_parse,
+        #    errback = self.err_up_callback,
+        #    dont_filter = True,
+        #    cb_kwargs = dict(video_bv=rank_item_bv, up_link_id=up_link_id)
+        #)
         
         #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
         #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
