@@ -17,7 +17,7 @@ class BilibiliAnimePipeline(object):
    
     def open_spider(self, spider):
         pass
-        '''
+        
         self.pool = PooledDB(pymysql,
                              mincached=5,
                              maxcached=5,
@@ -29,7 +29,7 @@ class BilibiliAnimePipeline(object):
                              db=spider.settings.get('MYSQL_DATABASE'),
                              password=spider.settings.get('MYSQL_PASSWORD'),
                              charset='utf8mb4')
-        '''
+        
 
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
                                                                 `bv`, 
@@ -105,7 +105,7 @@ class BilibiliAnimePipeline(object):
         self.logger.info('采集热门项 bv : {}'.format(item['rank_item_bv']))
         self.logger.info('收集热门项信息')
         
-        '''
+        
         self.db_conn = self.pool.connection()
         self.db_cursor = self.db_conn.cursor()
         
@@ -187,7 +187,6 @@ class BilibiliAnimePipeline(object):
         finally:
             self.db_cursor.close()
             self.db_conn.close()
-        '''
         
         return item
 
@@ -199,7 +198,7 @@ class BilibiliMusicPipeline(object):
    
     def open_spider(self, spider):
         pass
-        '''
+        
         self.pool = PooledDB(pymysql,
                              mincached=5,
                              maxcached=5,
@@ -211,7 +210,7 @@ class BilibiliMusicPipeline(object):
                              db=spider.settings.get('MYSQL_DATABASE'),
                              password=spider.settings.get('MYSQL_PASSWORD'),
                              charset='utf8mb4')
-        '''
+        
         
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
                                                                 `bv`, 
@@ -279,7 +278,7 @@ class BilibiliMusicPipeline(object):
         self.logger.info('采集热门项 bv : {}'.format(item['rank_item_bv']))
         self.logger.info('收集热门项信息')
         
-        '''
+        
         self.db_conn = self.pool.connection()
         self.db_cursor = self.db_conn.cursor()
         
@@ -349,6 +348,6 @@ class BilibiliMusicPipeline(object):
         finally:
             self.db_cursor.close()
             self.db_conn.close()
-        '''
+        
         
         return item
