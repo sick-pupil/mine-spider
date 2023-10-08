@@ -250,9 +250,9 @@ class BilibiliMusicSpider(Spider):
             await page.context.close()
             return
         
-        await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-        with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-            f.write(await page.content())
+        #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+        #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+        #    f.write(await page.content())
         
         await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
         await page.locator("//div[@class='bui-collapse-header']").hover()
