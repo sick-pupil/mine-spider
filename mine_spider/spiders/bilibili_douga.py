@@ -490,7 +490,7 @@ class BilibiliDougaSpider(Spider):
                 rank_item_video_reply_list.append(reply_item)
             total_reply = selector.xpath(query = "//li[@class='total-reply']/text()").extract_first()
         
-        if total_reply is not None or total_reply != '':
+        if total_reply is not None and total_reply != '':
             rank_item_video_detail['video_detail_reply'] = total_reply
         else:
             rank_item_video_detail['video_detail_reply'] = ''
