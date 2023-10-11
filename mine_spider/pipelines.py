@@ -443,7 +443,7 @@ class BilibiliDougaPipeline(object):
         
         self.db_conn = self.pool.connection()
         self.db_cursor = self.db_conn.cursor()
-        
+
         try:
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
                                                          item['rank_item_bv'], 
@@ -510,7 +510,6 @@ class BilibiliDougaPipeline(object):
         finally:
             self.db_cursor.close()
             self.db_conn.close()
-        
         
         return item
     
