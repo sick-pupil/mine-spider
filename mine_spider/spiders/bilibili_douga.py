@@ -187,29 +187,28 @@ class BilibiliDougaSpider(Spider):
             rank_item_href = dougaRankItem['rank_item_href']
             rank_item_bv = dougaRankItem['rank_item_bv']
             
-            if 'BV1iC4y1L7yS' in rank_item_bv:
-                yield Request(url = self.url_prefix + rank_item_href,
-                    meta = {
-                        'playwright': True, 
-                        'playwright_context': 'bilibili-douga-video-{}'.format(rank_item_bv), 
-                        'playwright_context_kwargs': {
-                            'ignore_https_errors': True,
-                        },
-                        'playwright_page_goto_kwargs': {
-                            'wait_until': 'load',
-                            'timeout': 1000 * 60 * 10,
-                        },
-                        "playwright_page_methods": [
-                            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
-                            PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
-                        ],
-                        'playwright_include_page': True,
-                    }, 
-                    callback = self.douga_video_parse,
-                    errback = self.err_video_callback,
-                    dont_filter = True,
-                    cb_kwargs = dict(rank_item_bv=rank_item_bv)
-                )
+            yield Request(url = self.url_prefix + rank_item_href,
+                meta = {
+                    'playwright': True, 
+                    'playwright_context': 'bilibili-douga-video-{}'.format(rank_item_bv), 
+                    'playwright_context_kwargs': {
+                        'ignore_https_errors': True,
+                    },
+                    'playwright_page_goto_kwargs': {
+                        'wait_until': 'load',
+                        'timeout': 1000 * 60 * 10,
+                    },
+                    "playwright_page_methods": [
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
+                    ],
+                    'playwright_include_page': True,
+                }, 
+                callback = self.douga_video_parse,
+                errback = self.err_video_callback,
+                dont_filter = True,
+                cb_kwargs = dict(rank_item_bv=rank_item_bv)
+            )
         
         await page.close()
         await page.context.close()
