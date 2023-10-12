@@ -244,7 +244,7 @@ class BilibiliGameSpider(Spider):
             yield Request(url = response.request.url,
                 meta = {
                     'playwright': True, 
-                    'playwright_context': 'bilibili-douga-video-{}'.format(rank_item_bv), 
+                    'playwright_context': 'bilibili-game-video-{}'.format(rank_item_bv), 
                     'playwright_context_kwargs': {
                         'ignore_https_errors': True,
                     },
@@ -258,7 +258,7 @@ class BilibiliGameSpider(Spider):
                     ],
                     'playwright_include_page': True,
                 }, 
-                callback = self.douga_video_parse,
+                callback = self.game_video_parse,
                 errback = self.err_video_callback,
                 dont_filter = True,
                 cb_kwargs = dict(rank_item_bv=rank_item_bv)
