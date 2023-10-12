@@ -232,6 +232,37 @@ class BilibiliTechSpider(Spider):
             await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for networkidle timeout')
+            
+        try:
+            await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").wait_for(timeout=1000 * 10)
+        except (TimeoutError, Error):
+            self.logger.info('wait for geetest_panel geetest_wind timeout')
+        
+        if await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").count() != 0:
+            await page.close()
+            await page.context.close()
+            yield Request(url = response.request.url,
+                meta = {
+                    'playwright': True, 
+                    'playwright_context': 'bilibili-douga-video-{}'.format(rank_item_bv), 
+                    'playwright_context_kwargs': {
+                        'ignore_https_errors': True,
+                    },
+                    'playwright_page_goto_kwargs': {
+                        'wait_until': 'load',
+                        'timeout': 1000 * 60 * 10,
+                    },
+                    "playwright_page_methods": [
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
+                    ],
+                    'playwright_include_page': True,
+                }, 
+                callback = self.douga_video_parse,
+                errback = self.err_video_callback,
+                dont_filter = True,
+                cb_kwargs = dict(rank_item_bv=rank_item_bv)
+            )
         
         try:
             await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
