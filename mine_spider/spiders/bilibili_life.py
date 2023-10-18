@@ -254,7 +254,7 @@ class BilibiliLifeSpider(Spider):
             if await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").count() != 0:
                 await page.close()
                 await page.context.close()
-                yield Request(url = response.request.url,
+                return Request(url = response.request.url,
                     meta = {
                         'playwright': True, 
                         'playwright_context': 'bilibili-life-video-{}'.format(rank_item_bv), 
