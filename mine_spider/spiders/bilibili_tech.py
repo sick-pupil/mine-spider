@@ -216,40 +216,399 @@ class BilibiliTechSpider(Spider):
 
     async def tech_video_parse(self, response, rank_item_bv : str):
         
-        rank_item_video_detail = BilibiliVideoDetail()
-        
-        self.logger.info('获取视频详情, 请求频道{}，视频链接{}, ua为{}'.format(self.channel_name, response.request.url, response.request.headers['user-agent']))
-        
         page = response.meta['playwright_page']
         
-        await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 30)
-        await page.evaluate('''() => {
-            let elements = document.querySelectorAll('.bpx-player-video-area');
-            elements.forEach(element => element.parentNode.removeChild(element));
-        }''')
-        
         try:
-            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
+            
+            rank_item_video_detail = BilibiliVideoDetail()
+            
+            self.logger.info('获取视频详情, 请求频道{}，视频链接{}, ua为{}'.format(self.channel_name, response.request.url, response.request.headers['user-agent']))
+            
+            
+            
+            await page.locator("//div[@class='bpx-player-video-area']").wait_for(timeout=1000 * 30)
+            await page.evaluate('''() => {
+                let elements = document.querySelectorAll('.bpx-player-video-area');
+                elements.forEach(element => element.parentNode.removeChild(element));
+            }''')
+            
+            try:
+                await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
+                await page.evaluate('''() => {
+                    let elements = document.querySelectorAll('.bili-mini-mask');
+                    elements.forEach(element => element.parentNode.removeChild(element));
+                }''')
+                await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).hover(timeout=1000 * 30)
+                await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).click(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for switch-button timeout')
+            
+            try:
+                await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for networkidle timeout')
+                
+            try:
+                await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").wait_for(timeout=1000 * 10)
+            except (TimeoutError, Error):
+                self.logger.info('wait for geetest_panel geetest_wind timeout')
+            
+            if await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").count() != 0:
+                await page.close()
+                await page.context.close()
+                yield Request(url = response.request.url,
+                    meta = {
+                        'playwright': True, 
+                        'playwright_context': 'bilibili-tech-video-{}'.format(rank_item_bv), 
+                        'playwright_context_kwargs': {
+                            'ignore_https_errors': True,
+                        },
+                        'playwright_page_goto_kwargs': {
+                            'wait_until': 'load',
+                            'timeout': 1000 * 60 * 10,
+                        },
+                        "playwright_page_methods": [
+                            PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                            PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
+                        ],
+                        'playwright_include_page': True,
+                    }, 
+                    callback = self.tech_video_parse,
+                    errback = self.err_video_callback,
+                    dont_filter = True,
+                    cb_kwargs = dict(rank_item_bv=rank_item_bv)
+                )
+            
+            await page.wait_for_timeout(3000)
+            
+            
+            page_url = page.url
+            if 'video/BV' not in page_url:
+                self.result_by_dict.pop(rank_item_bv)
+                await page.close()
+                await page.context.close()
+                return
+            
+            #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+            #    f.write(await page.content())
+            
+            await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
             await page.evaluate('''() => {
                 let elements = document.querySelectorAll('.bili-mini-mask');
                 elements.forEach(element => element.parentNode.removeChild(element));
             }''')
-            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).hover(timeout=1000 * 30)
-            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).click(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for switch-button timeout')
-        
-        try:
-            await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for networkidle timeout')
+            await page.locator("//div[@class='bui-collapse-header']").hover()
+            await page.locator("//div[@class='bui-collapse-header']").click()
+            await page.locator("//div[@class='bui-collapse-body']").wait_for(timeout=1000 * 30)
+                    
+            try:
+                await page.locator("//div[@class='dm-info-row ']").first.wait_for(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for dm-info-row  timeout')
             
-        try:
-            await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").wait_for(timeout=1000 * 10)
-        except (TimeoutError, Error):
-            self.logger.info('wait for geetest_panel geetest_wind timeout')
-        
-        if await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").count() != 0:
+            #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+            #    f.write(await page.content())
+            
+            resp = await page.content()
+            selector = Selector(text = resp)
+            
+            rank_item_video_danmu_list : list = []
+            for dammu_item_selector in selector.xpath("//div[@class='dm-info-row ']"):
+                dammu_item = BilibiliVideoDanmu()
+                # 弹幕时间
+                dammu_item['video_danmu_pubtime_in_video'] = dammu_item_selector.xpath(".//span[@class='dm-info-time']/text()").extract_first()
+                # 弹幕内容
+                dammu_item['video_danmu_context'] = dammu_item_selector.xpath(".//span[@class='dm-info-dm']/text()").extract_first().strip()
+                # 弹幕发送时间
+                dammu_item['video_danmu_pubtime'] = dammu_item_selector.xpath(".//span[@class='dm-info-date']/text()").extract_first().strip()
+                rank_item_video_danmu_list.append(dammu_item)
+            rank_item_video_detail['video_detail_danmus'] = rank_item_video_danmu_list
+            
+            try:
+                await page.locator("//div[@id='viewbox_report']/h1[@class='video-title']").wait_for(timeout=1000 * 30)
+                await page.locator("//div[@class='video-info-detail-list']").wait_for(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for bui-long-list-item and video-info-detail-list timeout')
+            
+            try:
+                await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='view item']").wait_for(timeout=1000 * 30)
+                await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='dm item']").wait_for(timeout=1000 * 30)
+                await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='pubdate-text']").wait_for(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for view item dm pubdate-text item timeout')
+            
+            video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
+            # 视频标题
+            rank_item_video_detail['video_detail_title'] = selector.xpath("//div[@id='viewbox_report']/h1[@class='video-title']/text()").extract_first()
+            # 视频播放量
+            rank_item_video_detail['video_detail_play'] = video_info_detail.xpath("//span[@class='view item']/text()").extract_first().strip()
+            # 视频弹幕量
+            rank_item_video_detail['video_detail_danmu'] = video_info_detail.xpath("//span[@class='dm item']/text()").extract_first().strip()
+            # 视频发布时间
+            rank_item_video_detail['video_detail_pubtime'] = video_info_detail.xpath("//span[@class='pubdate-text']/text()").extract_first().strip()
+            
+            try:
+                await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 30)
+                await page.locator("//div[@class='up-info--right']").wait_for(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for up-info-container timeout')
+            
+            try:
+                await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']/a").wait_for(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for members-info-container timeout')
+            
+            resp = await page.content()
+            selector = Selector(text = resp)
+            if await page.locator("//div[contains(@class, 'up-info-container')]").count() != 0:
+                up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
+                if up_info is not None:
+                    # up主个人空间链接
+                    rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[@class='up-name']/@href").extract_first()
+                    # up主名称
+                    rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()
+                    # up主简介
+                    rank_item_video_detail['video_detail_up_desc'] = up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()
+                    # up主被关注数量
+                    rank_item_video_detail['video_detail_up_gz'] = up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first().strip()
+            
+            if await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']/a").count() != 0:
+                up_info = selector.xpath("//div[contains(@class, 'members-info-container')]/div[@class='membersinfo-normal']/div[@class='container']/div[@class='membersinfo-upcard-wrap' and position()=1]")
+                self.logger.info(up_info.get())
+                if up_info is not None:
+                    # up主个人空间链接
+                    rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='staff-info']/a[contains(@class, 'staff-name')]/@href").extract_first()
+                    # up主名称
+                    rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='staff-info']/a[contains(@class, 'staff-name')]/text()").extract_first().strip()
+                    # up主简介
+                    rank_item_video_detail['video_detail_up_desc'] = ''
+                    # up主被关注数量
+                    rank_item_video_detail['video_detail_up_gz'] = ''
+            
+            
+            try:
+                await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for video-toolbar-left timeout')
+            
+            try:
+                await page.locator("//span[@class='video-like-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
+                await page.locator("//span[@class='video-coin-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
+                await page.locator("//span[@class='video-fav-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
+                await page.locator("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]").wait_for(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for video-like-info video-coin-info video-fav-info video-share-info timeout')
+
+            
+            resp = await page.content()
+            selector = Selector(text = resp)
+            video_toolbar = selector.xpath("//div[@class='video-toolbar-left']")
+            # 视频点赞
+            rank_item_video_detail['video_detail_like'] = video_toolbar.xpath("//span[@class='video-like-info video-toolbar-item-text']/text()").extract_first()
+            # 视频投币
+            rank_item_video_detail['video_detail_coin'] = video_toolbar.xpath("//span[@class='video-coin-info video-toolbar-item-text']/text()").extract_first()
+            # 视频收藏
+            rank_item_video_detail['video_detail_star'] = video_toolbar.xpath("//span[@class='video-fav-info video-toolbar-item-text']/text()").extract_first()
+            # 视频转发
+            rank_item_video_detail['video_detail_share'] = video_toolbar.xpath("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]/text()").extract_first()
+            
+            
+            #await page.evaluate("""
+            #    window.scrollTo({
+            #        top: document.body.scrollHeight,
+            #        behavior: 'smooth',
+            #    });
+            #    """
+            #)
+            await page.evaluate('''async (delay) => {
+                const scrollHeight = document.body.scrollHeight;
+                const scrollStep = scrollHeight / 100;
+                for(let i = 0; i < 100; i++) {
+                    window.scrollBy(0, scrollStep);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }''', 100)
+            try:
+                await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for networkidle timeout')
+            await page.wait_for_timeout(3000)
+            
+            
+            try:
+                await page.locator("//div[@class='left-container-under-player']").wait_for(timeout=1000 * 30)
+            except (TimeoutError, Error):
+                self.logger.info('wait for left-container-under-player timeout')
+                
+            try:
+                await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']").wait_for(timeout=1000 * 10)
+                await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']").wait_for(timeout=1000 * 10)
+                await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']").wait_for(timeout=1000 * 10)
+            except (TimeoutError, Error):
+                self.logger.info('wait for tag not-btn-tag timeout')
+            
+            resp = await page.content()
+            selector = Selector(text = resp)
+            under_video_container = selector.xpath("//div[@class='left-container-under-player']")
+            rank_item_video_detail['video_detail_desc'] = under_video_container.xpath("//span[@class='desc-info-text']/text()").extract_first()
+            rank_item_video_tag_list : list = []
+            
+            for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']/text()"):
+                # 视频标签
+                rank_item_video_tag_list.append(tag_selector.get().strip())
+            for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']/text()"):
+                # 视频标签
+                rank_item_video_tag_list.append(tag_selector.get().strip())
+            for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']/text()"):
+                # 视频标签
+                rank_item_video_tag_list.append(tag_selector.get().strip())
+            
+            rank_item_video_detail['video_detail_tags'] = rank_item_video_tag_list
+            
+            
+            try:
+                await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 30)
+                await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 30)
+                await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 30)
+                await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 30)
+                
+                #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+                #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+                #    f.write(await page.content())
+                tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+                while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
+                    self.logger.info('waiting for span total-reply text')
+                    tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
+                    continue
+            except (TimeoutError, Error):
+                self.logger.info('waiting for root-reply timeout')
+                
+            try:
+                await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 30)
+                await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 30)
+                await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 30)
+                await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 30)
+                
+                #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+                #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+                #    f.write(await page.content())
+                tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+                while tmp_total_reply is None or tmp_total_reply == '':
+                    self.logger.info('waiting for li total-reply text')
+                    tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
+                    continue
+            except (TimeoutError, Error):
+                self.logger.info('waiting for list-item reply-wrap timeout')
+            
+            await page.wait_for_timeout(1000)
+            resp = await page.content()
+            selector = Selector(text = resp)
+            
+            total_reply : str = ''
+            rank_item_video_reply_list : list = []
+            if selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']") is not None:
+                for list_item_selector in selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']"):
+                    reply_item = BilibiliVideoReply()
+                    # 评论内容
+                    #reply_item['video_reply_context'] = list_item_selector.xpath(".//span[@class='reply-content']/text()").extract_first()
+                    reply_item['video_reply_context'] = list_item_selector.xpath("string(.//span[@class='reply-content'])").extract_first()
+                    # 评论时间
+                    reply_item['video_reply_time'] = list_item_selector.xpath(".//span[@class='reply-time']/text()").extract_first()
+                    # 评论被点赞数
+                    reply_item['video_reply_like'] = list_item_selector.xpath(".//span[@class='reply-like']/span/text()").extract_first()
+                    rank_item_video_reply_list.append(reply_item)
+                total_reply = selector.xpath(query = "//span[@class='total-reply']/text()").extract_first()
+                    
+            elif selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']") is not None:
+                for list_item_selector in selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']"):
+                    reply_item = BilibiliVideoReply()
+                    # 评论内容
+                    #reply_item['video_reply_context'] = list_item_selector.xpath(".//p[@class='text']/text()").extract_first()
+                    reply_item['video_reply_context'] = list_item_selector.xpath("string(.//p[@class='text'])").extract_first()
+                    # 评论时间
+                    reply_item['video_reply_time'] = list_item_selector.xpath(".//div[@class='info']/span[@class='time-location']/span[@class='reply-time']/text()").extract_first()
+                    # 评论被点赞数
+                    reply_item['video_reply_like'] = list_item_selector.xpath(".//div[@class='info']/span[@class='like ']/span/text()").extract_first()
+                    rank_item_video_reply_list.append(reply_item)
+                total_reply = selector.xpath(query = "//li[@class='total-reply']/text()").extract_first()
+            
+            if total_reply is not None and total_reply != '':
+                rank_item_video_detail['video_detail_reply'] = total_reply
+            else:
+                rank_item_video_detail['video_detail_reply'] = ''
+            
+            rank_item_video_detail['video_detail_hot_replys'] = rank_item_video_reply_list
+            
+            techRankItem = self.result_by_dict[rank_item_bv]
+            techRankItem['rank_item_video_detail'] = rank_item_video_detail
+            
+            #if techRankItem['rank_item_video_detail']['video_detail_reply'] is None or techRankItem['rank_item_video_detail']['video_detail_reply'] == '':
+            #    await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            #    with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+            #        f.write(await page.content())
+                    
+            # 输出日志
+            #self.logger.info('视频标题 : {}'.format(rank_item_video_detail['video_detail_title']))
+            #self.logger.info('视频播放数 : {}'.format(rank_item_video_detail['video_detail_play']))
+            #self.logger.info('视频弹幕数 : {}'.format(rank_item_video_detail['video_detail_danmu']))
+            #self.logger.info('视频发布具体时间 : {}'.format(rank_item_video_detail['video_detail_pubtime']))
+            #self.logger.info('视频点赞数 : {}'.format(rank_item_video_detail['video_detail_like']))
+            #self.logger.info('视频投币数 : {}'.format(rank_item_video_detail['video_detail_coin']))
+            #self.logger.info('视频收藏数 : {}'.format(rank_item_video_detail['video_detail_star']))
+            #self.logger.info('视频转发数 : {}'.format(rank_item_video_detail['video_detail_share']))
+            #for tag in rank_item_video_detail['video_detail_tags']:
+            #    self.logger.info('视频标签 : {}'.format(tag))
+            
+            #self.logger.info('视频简介 : {}'.format(rank_item_video_detail['video_detail_desc']))
+            #self.logger.info('视频总评论数 : {}'.format(rank_item_video_detail['video_detail_reply']))
+            #for reply in rank_item_video_detail['video_detail_hot_replys']:
+            #    self.logger.info('评论内容 : {}'.format(reply['video_reply_context']))
+            #    self.logger.info('评论时间 : {}'.format(reply['video_reply_time']))
+            #    self.logger.info('评论被点赞数 : {}'.format(reply['video_reply_like']))
+            
+            #for dammu in rank_item_video_detail['video_detail_danmus']:
+            #    self.logger.info('弹幕发送的视频时间节点 : {}'.format(dammu['video_danmu_pubtime_in_video']))
+            #    self.logger.info('弹幕内容 : {}'.format(dammu['video_danmu_context']))
+            #    self.logger.info('弹幕发送时间 : {}'.format(dammu['video_danmu_pubtime']))
+            
+            #self.logger.info('视频发布人个人空间链接 : {}'.format(rank_item_video_detail['video_detail_up_link']))
+            #self.logger.info('视频发布人名称 : {}'.format(rank_item_video_detail['video_detail_up_name']))
+            #self.logger.info('视频发布人简介 : {}'.format(rank_item_video_detail['video_detail_up_desc']))
+            #self.logger.info('视频发布人被关注数量 : {}'.format(rank_item_video_detail['video_detail_up_gz']))
+                    
+            up_link_id = rank_item_video_detail['video_detail_up_link'].split('/')[3]
+            yield Request(url = self.url_prefix + rank_item_video_detail['video_detail_up_link'],
+                meta = {
+                    'playwright': True, 
+                    'playwright_context': 'video-up-{}-{}-{}'.format(rank_item_bv, up_link_id, datetime.now().strftime("%Y%m%d%H%M%S")), 
+                    'playwright_context_kwargs': {
+                        'ignore_https_errors': True,
+                     },
+                    'playwright_page_goto_kwargs': {
+                        'wait_until': 'networkidle',
+                        'timeout': 1000 * 60 * 10,
+                    },
+                    "playwright_page_methods": [
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
+                    ],
+                    'playwright_include_page': True,
+                }, 
+                callback = self.up_info_parse,
+                errback = self.err_up_callback,
+                dont_filter = True,
+                cb_kwargs = dict(video_bv=rank_item_bv, up_link_id=up_link_id)
+            )
+            
+            #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
+            #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
+            #    f.write(await page.content())
+            
+            await page.close()
+            await page.context.close()
+        except BaseException:
             await page.close()
             await page.context.close()
             yield Request(url = response.request.url,
@@ -274,337 +633,6 @@ class BilibiliTechSpider(Spider):
                 dont_filter = True,
                 cb_kwargs = dict(rank_item_bv=rank_item_bv)
             )
-        
-        await page.wait_for_timeout(3000)
-        
-        
-        page_url = page.url
-        if 'video/BV' not in page_url:
-            self.result_by_dict.pop(rank_item_bv)
-            await page.close()
-            await page.context.close()
-            return
-        
-        #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-        #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-        #    f.write(await page.content())
-        
-        await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
-        await page.evaluate('''() => {
-            let elements = document.querySelectorAll('.bili-mini-mask');
-            elements.forEach(element => element.parentNode.removeChild(element));
-        }''')
-        await page.locator("//div[@class='bui-collapse-header']").hover()
-        await page.locator("//div[@class='bui-collapse-header']").click()
-        await page.locator("//div[@class='bui-collapse-body']").wait_for(timeout=1000 * 30)
-                
-        try:
-            await page.locator("//div[@class='dm-info-row ']").first.wait_for(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for dm-info-row  timeout')
-        
-        #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-        #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-        #    f.write(await page.content())
-        
-        resp = await page.content()
-        selector = Selector(text = resp)
-        
-        rank_item_video_danmu_list : list = []
-        for dammu_item_selector in selector.xpath("//div[@class='dm-info-row ']"):
-            dammu_item = BilibiliVideoDanmu()
-            # 弹幕时间
-            dammu_item['video_danmu_pubtime_in_video'] = dammu_item_selector.xpath(".//span[@class='dm-info-time']/text()").extract_first()
-            # 弹幕内容
-            dammu_item['video_danmu_context'] = dammu_item_selector.xpath(".//span[@class='dm-info-dm']/text()").extract_first().strip()
-            # 弹幕发送时间
-            dammu_item['video_danmu_pubtime'] = dammu_item_selector.xpath(".//span[@class='dm-info-date']/text()").extract_first().strip()
-            rank_item_video_danmu_list.append(dammu_item)
-        rank_item_video_detail['video_detail_danmus'] = rank_item_video_danmu_list
-        
-        try:
-            await page.locator("//div[@id='viewbox_report']/h1[@class='video-title']").wait_for(timeout=1000 * 30)
-            await page.locator("//div[@class='video-info-detail-list']").wait_for(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for bui-long-list-item and video-info-detail-list timeout')
-        
-        try:
-            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='view item']").wait_for(timeout=1000 * 30)
-            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='dm item']").wait_for(timeout=1000 * 30)
-            await page.locator("//div[@class='video-info-detail-list']/descendant::span[@class='pubdate-text']").wait_for(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for view item dm pubdate-text item timeout')
-        
-        video_info_detail = selector.xpath("//div[@class='video-info-detail-list']")
-        # 视频标题
-        rank_item_video_detail['video_detail_title'] = selector.xpath("//div[@id='viewbox_report']/h1[@class='video-title']/text()").extract_first()
-        # 视频播放量
-        rank_item_video_detail['video_detail_play'] = video_info_detail.xpath("//span[@class='view item']/text()").extract_first().strip()
-        # 视频弹幕量
-        rank_item_video_detail['video_detail_danmu'] = video_info_detail.xpath("//span[@class='dm item']/text()").extract_first().strip()
-        # 视频发布时间
-        rank_item_video_detail['video_detail_pubtime'] = video_info_detail.xpath("//span[@class='pubdate-text']/text()").extract_first().strip()
-        
-        try:
-            await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 30)
-            await page.locator("//div[@class='up-info--right']").wait_for(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for up-info-container timeout')
-        
-        try:
-            await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']/a").wait_for(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for members-info-container timeout')
-        
-        resp = await page.content()
-        selector = Selector(text = resp)
-        if await page.locator("//div[contains(@class, 'up-info-container')]").count() != 0:
-            up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
-            if up_info is not None:
-                # up主个人空间链接
-                rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[@class='up-name']/@href").extract_first()
-                # up主名称
-                rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()
-                # up主简介
-                rank_item_video_detail['video_detail_up_desc'] = up_info.xpath("//div[@class='up-info--right']/descendant::div[@class='up-description up-detail-bottom']/text()").extract_first()
-                # up主被关注数量
-                rank_item_video_detail['video_detail_up_gz'] = up_info.xpath("//div[@class='up-info--right']/descendant::span[@class='follow-btn-inner']/text()").extract_first().strip()
-        
-        if await page.locator("//div[contains(@class, 'members-info-container')]/descendant::div[@class='staff-info']/a").count() != 0:
-            up_info = selector.xpath("//div[contains(@class, 'members-info-container')]/div[@class='membersinfo-normal']/div[@class='container']/div[@class='membersinfo-upcard-wrap' and position()=1]")
-            self.logger.info(up_info.get())
-            if up_info is not None:
-                # up主个人空间链接
-                rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='staff-info']/a[contains(@class, 'staff-name')]/@href").extract_first()
-                # up主名称
-                rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='staff-info']/a[contains(@class, 'staff-name')]/text()").extract_first().strip()
-                # up主简介
-                rank_item_video_detail['video_detail_up_desc'] = ''
-                # up主被关注数量
-                rank_item_video_detail['video_detail_up_gz'] = ''
-        
-        
-        try:
-            await page.locator("//div[@class='video-toolbar-left']").wait_for(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for video-toolbar-left timeout')
-        
-        try:
-            await page.locator("//span[@class='video-like-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
-            await page.locator("//span[@class='video-coin-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
-            await page.locator("//span[@class='video-fav-info video-toolbar-item-text']").wait_for(timeout=1000 * 30)
-            await page.locator("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]").wait_for(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for video-like-info video-coin-info video-fav-info video-share-info timeout')
-
-        
-        resp = await page.content()
-        selector = Selector(text = resp)
-        video_toolbar = selector.xpath("//div[@class='video-toolbar-left']")
-        # 视频点赞
-        rank_item_video_detail['video_detail_like'] = video_toolbar.xpath("//span[@class='video-like-info video-toolbar-item-text']/text()").extract_first()
-        # 视频投币
-        rank_item_video_detail['video_detail_coin'] = video_toolbar.xpath("//span[@class='video-coin-info video-toolbar-item-text']/text()").extract_first()
-        # 视频收藏
-        rank_item_video_detail['video_detail_star'] = video_toolbar.xpath("//span[@class='video-fav-info video-toolbar-item-text']/text()").extract_first()
-        # 视频转发
-        rank_item_video_detail['video_detail_share'] = video_toolbar.xpath("//span[contains(@class, 'video-share-info-text') or contains(@class, 'video-share-info')]/text()").extract_first()
-        
-        
-        #await page.evaluate("""
-        #    window.scrollTo({
-        #        top: document.body.scrollHeight,
-        #        behavior: 'smooth',
-        #    });
-        #    """
-        #)
-        await page.evaluate('''async (delay) => {
-            const scrollHeight = document.body.scrollHeight;
-            const scrollStep = scrollHeight / 100;
-            for(let i = 0; i < 100; i++) {
-                window.scrollBy(0, scrollStep);
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
-        }''', 100)
-        try:
-            await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for networkidle timeout')
-        await page.wait_for_timeout(3000)
-        
-        
-        try:
-            await page.locator("//div[@class='left-container-under-player']").wait_for(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for left-container-under-player timeout')
-            
-        try:
-            await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']").wait_for(timeout=1000 * 10)
-            await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']").wait_for(timeout=1000 * 10)
-            await page.locator("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']").wait_for(timeout=1000 * 10)
-        except (TimeoutError, Error):
-            self.logger.info('wait for tag not-btn-tag timeout')
-        
-        resp = await page.content()
-        selector = Selector(text = resp)
-        under_video_container = selector.xpath("//div[@class='left-container-under-player']")
-        rank_item_video_detail['video_detail_desc'] = under_video_container.xpath("//span[@class='desc-info-text']/text()").extract_first()
-        rank_item_video_tag_list : list = []
-        
-        for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']/text()"):
-            # 视频标签
-            rank_item_video_tag_list.append(tag_selector.get().strip())
-        for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']/text()"):
-            # 视频标签
-            rank_item_video_tag_list.append(tag_selector.get().strip())
-        for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']/text()"):
-            # 视频标签
-            rank_item_video_tag_list.append(tag_selector.get().strip())
-        
-        rank_item_video_detail['video_detail_tags'] = rank_item_video_tag_list
-        
-        
-        try:
-            await page.locator(selector = "//div[@class='reply-header']").wait_for(timeout=1000 * 30)
-            await page.locator(selector = "//div[@class='reply-warp']").wait_for(timeout=1000 * 30)
-            await page.locator(selector = "//div[@class='reply-list']/descendant::div[@class='root-reply']").first.wait_for(timeout=1000 * 30)
-            await page.locator(selector = "//span[@class='total-reply']").wait_for(timeout=1000 * 30)
-            
-            #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-            #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-            #    f.write(await page.content())
-            tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
-            while tmp_total_reply is None or tmp_total_reply == '0' or tmp_total_reply == '':
-                self.logger.info('waiting for span total-reply text')
-                tmp_total_reply = await page.locator("//span[@class='total-reply']").inner_text()
-                continue
-        except (TimeoutError, Error):
-            self.logger.info('waiting for root-reply timeout')
-            
-        try:
-            await page.locator(selector = "//div[@class='comment-header clearfix']").wait_for(timeout=1000 * 30)
-            await page.locator(selector = "//div[@class='comment-list ']").wait_for(timeout=1000 * 30)
-            await page.locator(selector = "//div[@class='comment-list ']/descendant::div[contains(@class, 'list-item reply-wrap ')]").first.wait_for(timeout=1000 * 30)
-            await page.locator(selector = "//li[@class='total-reply']").wait_for(timeout=1000 * 30)
-            
-            #await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-            #with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-            #    f.write(await page.content())
-            tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
-            while tmp_total_reply is None or tmp_total_reply == '':
-                self.logger.info('waiting for li total-reply text')
-                tmp_total_reply = await page.locator("//li[@class='total-reply']").inner_text()
-                continue
-        except (TimeoutError, Error):
-            self.logger.info('waiting for list-item reply-wrap timeout')
-        
-        await page.wait_for_timeout(1000)
-        resp = await page.content()
-        selector = Selector(text = resp)
-        
-        total_reply : str = ''
-        rank_item_video_reply_list : list = []
-        if selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']") is not None:
-            for list_item_selector in selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']"):
-                reply_item = BilibiliVideoReply()
-                # 评论内容
-                #reply_item['video_reply_context'] = list_item_selector.xpath(".//span[@class='reply-content']/text()").extract_first()
-                reply_item['video_reply_context'] = list_item_selector.xpath("string(.//span[@class='reply-content'])").extract_first()
-                # 评论时间
-                reply_item['video_reply_time'] = list_item_selector.xpath(".//span[@class='reply-time']/text()").extract_first()
-                # 评论被点赞数
-                reply_item['video_reply_like'] = list_item_selector.xpath(".//span[@class='reply-like']/span/text()").extract_first()
-                rank_item_video_reply_list.append(reply_item)
-            total_reply = selector.xpath(query = "//span[@class='total-reply']/text()").extract_first()
-                
-        elif selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']") is not None:
-            for list_item_selector in selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']"):
-                reply_item = BilibiliVideoReply()
-                # 评论内容
-                #reply_item['video_reply_context'] = list_item_selector.xpath(".//p[@class='text']/text()").extract_first()
-                reply_item['video_reply_context'] = list_item_selector.xpath("string(.//p[@class='text'])").extract_first()
-                # 评论时间
-                reply_item['video_reply_time'] = list_item_selector.xpath(".//div[@class='info']/span[@class='time-location']/span[@class='reply-time']/text()").extract_first()
-                # 评论被点赞数
-                reply_item['video_reply_like'] = list_item_selector.xpath(".//div[@class='info']/span[@class='like ']/span/text()").extract_first()
-                rank_item_video_reply_list.append(reply_item)
-            total_reply = selector.xpath(query = "//li[@class='total-reply']/text()").extract_first()
-        
-        if total_reply is not None and total_reply != '':
-            rank_item_video_detail['video_detail_reply'] = total_reply
-        else:
-            rank_item_video_detail['video_detail_reply'] = ''
-        
-        rank_item_video_detail['video_detail_hot_replys'] = rank_item_video_reply_list
-        
-        techRankItem = self.result_by_dict[rank_item_bv]
-        techRankItem['rank_item_video_detail'] = rank_item_video_detail
-        
-        #if techRankItem['rank_item_video_detail']['video_detail_reply'] is None or techRankItem['rank_item_video_detail']['video_detail_reply'] == '':
-        #    await page.screenshot(path='/screenshot_{}_{}.png'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-        #    with open(file='/screenshot_{}_{}.html'.format(rank_item_bv, datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-        #        f.write(await page.content())
-                
-        # 输出日志
-        #self.logger.info('视频标题 : {}'.format(rank_item_video_detail['video_detail_title']))
-        #self.logger.info('视频播放数 : {}'.format(rank_item_video_detail['video_detail_play']))
-        #self.logger.info('视频弹幕数 : {}'.format(rank_item_video_detail['video_detail_danmu']))
-        #self.logger.info('视频发布具体时间 : {}'.format(rank_item_video_detail['video_detail_pubtime']))
-        #self.logger.info('视频点赞数 : {}'.format(rank_item_video_detail['video_detail_like']))
-        #self.logger.info('视频投币数 : {}'.format(rank_item_video_detail['video_detail_coin']))
-        #self.logger.info('视频收藏数 : {}'.format(rank_item_video_detail['video_detail_star']))
-        #self.logger.info('视频转发数 : {}'.format(rank_item_video_detail['video_detail_share']))
-        #for tag in rank_item_video_detail['video_detail_tags']:
-        #    self.logger.info('视频标签 : {}'.format(tag))
-        
-        #self.logger.info('视频简介 : {}'.format(rank_item_video_detail['video_detail_desc']))
-        #self.logger.info('视频总评论数 : {}'.format(rank_item_video_detail['video_detail_reply']))
-        #for reply in rank_item_video_detail['video_detail_hot_replys']:
-        #    self.logger.info('评论内容 : {}'.format(reply['video_reply_context']))
-        #    self.logger.info('评论时间 : {}'.format(reply['video_reply_time']))
-        #    self.logger.info('评论被点赞数 : {}'.format(reply['video_reply_like']))
-        
-        #for dammu in rank_item_video_detail['video_detail_danmus']:
-        #    self.logger.info('弹幕发送的视频时间节点 : {}'.format(dammu['video_danmu_pubtime_in_video']))
-        #    self.logger.info('弹幕内容 : {}'.format(dammu['video_danmu_context']))
-        #    self.logger.info('弹幕发送时间 : {}'.format(dammu['video_danmu_pubtime']))
-        
-        #self.logger.info('视频发布人个人空间链接 : {}'.format(rank_item_video_detail['video_detail_up_link']))
-        #self.logger.info('视频发布人名称 : {}'.format(rank_item_video_detail['video_detail_up_name']))
-        #self.logger.info('视频发布人简介 : {}'.format(rank_item_video_detail['video_detail_up_desc']))
-        #self.logger.info('视频发布人被关注数量 : {}'.format(rank_item_video_detail['video_detail_up_gz']))
-                
-        up_link_id = rank_item_video_detail['video_detail_up_link'].split('/')[3]
-        yield Request(url = self.url_prefix + rank_item_video_detail['video_detail_up_link'],
-            meta = {
-                'playwright': True, 
-                'playwright_context': 'video-up-{}-{}-{}'.format(rank_item_bv, up_link_id, datetime.now().strftime("%Y%m%d%H%M%S")), 
-                'playwright_context_kwargs': {
-                    'ignore_https_errors': True,
-                 },
-                'playwright_page_goto_kwargs': {
-                    'wait_until': 'networkidle',
-                    'timeout': 1000 * 60 * 10,
-                },
-                "playwright_page_methods": [
-                    PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
-                    PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
-                ],
-                'playwright_include_page': True,
-            }, 
-            callback = self.up_info_parse,
-            errback = self.err_up_callback,
-            dont_filter = True,
-            cb_kwargs = dict(video_bv=rank_item_bv, up_link_id=up_link_id)
-        )
-        
-        #await page.screenshot(path='/screenshot_{}_{}.png'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), full_page=True)
-        #with open(file='/screenshot_{}_{}.html'.format(response.request.url.split('/')[4], datetime.now().strftime("%Y%m%d%H%M%S")), mode='w', encoding='utf-8') as f:
-        #    f.write(await page.content())
-        
-        await page.close()
-        await page.context.close()
-        
         
     async def up_info_parse(self, response, video_bv : str, up_link_id : str):
         
