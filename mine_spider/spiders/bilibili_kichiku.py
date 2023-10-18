@@ -121,8 +121,8 @@ class BilibiliKichikuSpider(Spider):
                 
                 area_grid_selector = Selector(text = await area_grid.inner_html())
                         
-                area_name = await area_grid.locator("//div[@class='area-header']/div[@class='left']/descendant::span").inner_text()
-                if area_name == '前方高能':
+                area_name = area_grid_selector.xpath("//div[@class='area-header']/div[@class='left']/a[@class='title title-hover']/span/text()").extract_first()
+                if area_name is None:
                     continue
                 
                 rank_item_list = await area_grid.locator("//aside/descendant::li[@class='bili-rank-list-video__item']/div[@class='bili-rank-list-video__item--wrap']").all()
@@ -229,6 +229,17 @@ class BilibiliKichikuSpider(Spider):
         }''')
         
         try:
+            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
+            await page.evaluate('''() => {
+                let elements = document.querySelectorAll('.bili-mini-mask');
+                elements.forEach(element => element.parentNode.removeChild(element));
+            }''')
+            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).hover(timeout=1000 * 30)
+            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).click(timeout=1000 * 30)
+        except (TimeoutError, Error):
+            self.logger.info('wait for switch-button timeout')
+        
+        try:
             await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for networkidle timeout')
@@ -264,13 +275,6 @@ class BilibiliKichikuSpider(Spider):
                 cb_kwargs = dict(rank_item_bv=rank_item_bv)
             )
         
-        try:
-            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
-            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).hover(timeout=1000 * 30)
-            await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).click(timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for switch-button timeout')
-        
         await page.wait_for_timeout(3000)
         
         
@@ -286,6 +290,10 @@ class BilibiliKichikuSpider(Spider):
         #    f.write(await page.content())
         
         await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
+        await page.evaluate('''() => {
+            let elements = document.querySelectorAll('.bili-mini-mask');
+            elements.forEach(element => element.parentNode.removeChild(element));
+        }''')
         await page.locator("//div[@class='bui-collapse-header']").hover()
         await page.locator("//div[@class='bui-collapse-header']").click()
         await page.locator("//div[@class='bui-collapse-body']").wait_for(timeout=1000 * 30)
@@ -339,6 +347,7 @@ class BilibiliKichikuSpider(Spider):
         
         try:
             await page.locator("//div[contains(@class, 'up-info-container')]").wait_for(timeout=1000 * 30)
+            await page.locator("//div[@class='up-info--right']").wait_for(timeout=1000 * 30)
         except (TimeoutError, Error):
             self.logger.info('wait for up-info-container timeout')
         
@@ -353,7 +362,7 @@ class BilibiliKichikuSpider(Spider):
             up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
             if up_info is not None:
                 # up主个人空间链接
-                rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--left']/descendant::a[@class='up-avatar']/@href").extract_first()
+                rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[@class='up-name']/@href").extract_first()
                 # up主名称
                 rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()
                 # up主简介

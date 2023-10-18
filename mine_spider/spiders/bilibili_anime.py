@@ -337,19 +337,53 @@ class BilibiliAnimeSpider(Spider):
         }''')
         
         try:
-            await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
-        except (TimeoutError, Error):
-            self.logger.info('wait for networkidle timeout')
-        
-        try:
             await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).wait_for(timeout=1000 * 30)
+            await page.evaluate('''() => {
+                let elements = document.querySelectorAll('.bili-mini-mask');
+                elements.forEach(element => element.parentNode.removeChild(element));
+            }''')
             await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).hover()
             await page.locator(selector = "//span[@class='next-button']", has = page.locator(selector = "//span[@class='switch-button on']")).click()
         except (TimeoutError, Error):
             self.logger.info('wait for switch-button timeout')
         
-        await page.wait_for_timeout(3000)
+        try:
+            await page.wait_for_load_state(state='networkidle', timeout=1000 * 30)
+        except (TimeoutError, Error):
+            self.logger.info('wait for networkidle timeout')
+            
+        try:
+            await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").wait_for(timeout=1000 * 10)
+        except (TimeoutError, Error):
+            self.logger.info('wait for geetest_panel geetest_wind timeout')
         
+        if await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").count() != 0:
+            await page.close()
+            await page.context.close()
+            yield Request(url = response.request.url,
+                meta = {
+                    'playwright': True, 
+                    'playwright_context': 'bilibili-anime-video-{}'.format(rank_item_bv), 
+                    'playwright_context_kwargs': {
+                        'ignore_https_errors': True,
+                    },
+                    'playwright_page_goto_kwargs': {
+                        'wait_until': 'load',
+                        'timeout': 1000 * 60 * 10,
+                    },
+                    "playwright_page_methods": [
+                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
+                        PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
+                    ],
+                    'playwright_include_page': True,
+                }, 
+                callback = self.anime_video_parse,
+                errback = self.err_video_callback,
+                dont_filter = True,
+                cb_kwargs = dict(rank_item_bv=rank_item_bv)
+            )
+        
+        await page.wait_for_timeout(3000)
         
         page_url = page.url
         if 'video/BV' not in page_url:
@@ -360,6 +394,10 @@ class BilibiliAnimeSpider(Spider):
         
         
         await page.locator("//div[@class='bui-collapse-header']").wait_for(timeout=1000 * 30)
+        await page.evaluate('''() => {
+            let elements = document.querySelectorAll('.bili-mini-mask');
+            elements.forEach(element => element.parentNode.removeChild(element));
+        }''')
         await page.locator("//div[@class='bui-collapse-header']").hover()
         await page.locator("//div[@class='bui-collapse-header']").click()
         await page.locator("//div[@class='bui-collapse-body']").wait_for(timeout=1000 * 30)
