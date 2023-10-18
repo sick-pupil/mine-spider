@@ -257,6 +257,10 @@ class BilibiliMusicPipeline(object):
                                                                                 `context`, 
                                                                                 `pubtime`) 
                                         values (%s, %s, %s, %s)"""
+        
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+                                                                            `tag`)
+                                        values (%s, %s)"""
                                         
         
         self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
@@ -329,6 +333,14 @@ class BilibiliMusicPipeline(object):
                 danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
+            
+            
+            self.logger.info('收集视频标签详情信息')
+            tag_tuple_list = list()
+            for tag in item['rank_item_video_detail']['video_detail_tags']:
+                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple_list.append(tag_tuple)
+            self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
@@ -419,6 +431,10 @@ class BilibiliDougaPipeline(object):
                                                                                 `context`, 
                                                                                 `pubtime`) 
                                         values (%s, %s, %s, %s)"""
+        
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+                                                                            `tag`)
+                                        values (%s, %s)"""
                                         
         
         self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
@@ -491,6 +507,14 @@ class BilibiliDougaPipeline(object):
                 danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
+            
+            
+            self.logger.info('收集视频标签详情信息')
+            tag_tuple_list = list()
+            for tag in item['rank_item_video_detail']['video_detail_tags']:
+                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple_list.append(tag_tuple)
+            self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
@@ -580,6 +604,10 @@ class BilibiliGamePipeline(object):
                                                                                 `context`, 
                                                                                 `pubtime`) 
                                         values (%s, %s, %s, %s)"""
+        
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+                                                                            `tag`)
+                                        values (%s, %s)"""
                                         
         
         self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
@@ -652,6 +680,14 @@ class BilibiliGamePipeline(object):
                 danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
+            
+            
+            self.logger.info('收集视频标签详情信息')
+            tag_tuple_list = list()
+            for tag in item['rank_item_video_detail']['video_detail_tags']:
+                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple_list.append(tag_tuple)
+            self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
@@ -742,6 +778,10 @@ class BilibiliKichikuPipeline(object):
                                                                                 `context`, 
                                                                                 `pubtime`) 
                                         values (%s, %s, %s, %s)"""
+        
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+                                                                            `tag`)
+                                        values (%s, %s)"""
                                         
         
         self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
@@ -814,6 +854,14 @@ class BilibiliKichikuPipeline(object):
                 danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
+            
+            
+            self.logger.info('收集视频标签详情信息')
+            tag_tuple_list = list()
+            for tag in item['rank_item_video_detail']['video_detail_tags']:
+                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple_list.append(tag_tuple)
+            self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
@@ -904,6 +952,10 @@ class BilibiliEntPipeline(object):
                                                                                 `context`, 
                                                                                 `pubtime`) 
                                         values (%s, %s, %s, %s)"""
+        
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+                                                                            `tag`)
+                                        values (%s, %s)"""
                                         
         
         self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
@@ -976,6 +1028,14 @@ class BilibiliEntPipeline(object):
                 danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
+            
+            
+            self.logger.info('收集视频标签详情信息')
+            tag_tuple_list = list()
+            for tag in item['rank_item_video_detail']['video_detail_tags']:
+                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple_list.append(tag_tuple)
+            self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
@@ -1066,6 +1126,10 @@ class BilibiliLifePipeline(object):
                                                                                 `context`, 
                                                                                 `pubtime`) 
                                         values (%s, %s, %s, %s)"""
+        
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+                                                                            `tag`)
+                                        values (%s, %s)"""
                                         
         
         self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
@@ -1138,6 +1202,14 @@ class BilibiliLifePipeline(object):
                 danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
+            
+            
+            self.logger.info('收集视频标签详情信息')
+            tag_tuple_list = list()
+            for tag in item['rank_item_video_detail']['video_detail_tags']:
+                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple_list.append(tag_tuple)
+            self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
@@ -1228,6 +1300,10 @@ class BilibiliTechPipeline(object):
                                                                                 `context`, 
                                                                                 `pubtime`) 
                                         values (%s, %s, %s, %s)"""
+        
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+                                                                            `tag`)
+                                        values (%s, %s)"""
                                         
         
         self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
@@ -1300,6 +1376,14 @@ class BilibiliTechPipeline(object):
                 danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
+            
+            
+            self.logger.info('收集视频标签详情信息')
+            tag_tuple_list = list()
+            for tag in item['rank_item_video_detail']['video_detail_tags']:
+                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple_list.append(tag_tuple)
+            self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
