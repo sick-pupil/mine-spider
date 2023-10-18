@@ -364,7 +364,7 @@ class BilibiliMusicSpider(Spider):
                 up_info = selector.xpath("//div[contains(@class, 'up-info-container')]")
                 if up_info is not None:
                     # up主个人空间链接
-                    rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[@class='up-name']/@href").extract_first()
+                    rank_item_video_detail['video_detail_up_link'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/@href").extract_first()
                     # up主名称
                     rank_item_video_detail['video_detail_up_name'] = up_info.xpath("//div[@class='up-info--right']/descendant::a[contains(@class, 'up-name')]/text()").extract_first().strip()
                     # up主简介
@@ -606,31 +606,12 @@ class BilibiliMusicSpider(Spider):
             
             await page.close()
             await page.context.close()
-        except BaseException:
+        except BaseException as e:
+            self.logger.error(repr(e))
             await page.close()
             await page.context.close()
-            yield Request(url = response.request.url,
-                meta = {
-                    'playwright': True, 
-                    'playwright_context': 'bilibili-music-video-{}'.format(rank_item_bv), 
-                    'playwright_context_kwargs': {
-                        'ignore_https_errors': True,
-                    },
-                    'playwright_page_goto_kwargs': {
-                        'wait_until': 'load',
-                        'timeout': 1000 * 60 * 10,
-                    },
-                    "playwright_page_methods": [
-                        PageMethod("set_default_navigation_timeout", timeout=1000 * 60 * 10),
-                        PageMethod("set_default_timeout", timeout=1000 * 60 * 10),
-                    ],
-                    'playwright_include_page': True,
-                }, 
-                callback = self.music_video_parse,
-                errback = self.err_video_callback,
-                dont_filter = True,
-                cb_kwargs = dict(rank_item_bv=rank_item_bv)
-            )
+            self.result_by_dict.pop(rank_item_bv)
+            return
         
     async def up_info_parse(self, response, video_bv : str, up_link_id : str):
         
