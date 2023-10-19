@@ -362,7 +362,7 @@ class BilibiliAnimeSpider(Spider):
             if await page.locator("//div[contains(@class, 'geetest_panel') and contains(@class, 'geetest_wind')]").count() != 0:
                 await page.close()
                 await page.context.close()
-                return Request(url = response.request.url,
+                yield Request(url = response.request.url,
                     meta = {
                         'playwright': True, 
                         'playwright_context': 'bilibili-anime-video-{}'.format(rank_item_bv), 
@@ -384,6 +384,7 @@ class BilibiliAnimeSpider(Spider):
                     dont_filter = True,
                     cb_kwargs = dict(rank_item_bv=rank_item_bv)
                 )
+                return;
             
             await page.wait_for_timeout(3000)
             
