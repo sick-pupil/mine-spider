@@ -32,7 +32,8 @@ class BilibiliAnimePipeline(object):
         
 
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
-                                                                `bv`, 
+                                                                `bv`,
+                                                                `batch_id`, 
                                                                 `block_name`, 
                                                                 `block_hot_time_range`, 
                                                                 `order_num`, 
@@ -46,10 +47,11 @@ class BilibiliAnimePipeline(object):
                                                                 `danmu`, 
                                                                 `star`, 
                                                                 `coin`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `title`, 
                                                                                 `play`, 
                                                                                 `danmu`, 
@@ -64,29 +66,33 @@ class BilibiliAnimePipeline(object):
                                                                                 `up_name`, 
                                                                                 `up_desc`, 
                                                                                 `up_gz`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `context`, 
                                                                                 `time`, 
                                                                                 `like`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `pubtime_in_video`, 
                                                                                 `context`, 
                                                                                 `pubtime`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
         
         
-        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`,
+                                                                            `batch_id`, 
                                                                             `tag`)
-                                        values (%s, %s)"""
+                                        values (%s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`,
+                                                                        `batch_id`, 
                                                                         `up_uid`, 
                                                                         `up_name`, 
                                                                         `up_desc`, 
@@ -94,7 +100,7 @@ class BilibiliAnimePipeline(object):
                                                                         `up_fs`, 
                                                                         `up_tg`, 
                                                                         `up_hj`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
         pass
@@ -112,7 +118,8 @@ class BilibiliAnimePipeline(object):
         try:
             pass
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
-                                                     item['rank_item_bv'], 
+                                                     item['rank_item_bv'],
+                                                     item['batch_id'], 
                                                      item['block_name'], 
                                                      item['block_hot_time_range'], 
                                                      item['rank_item_num'], 
@@ -129,7 +136,8 @@ class BilibiliAnimePipeline(object):
         
         
             self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'],
+                                                     item['rank_item_video_detail']['batch_id'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
                                                      item['rank_item_video_detail']['video_detail_play'], 
                                                      item['rank_item_video_detail']['video_detail_danmu'], 
@@ -149,7 +157,7 @@ class BilibiliAnimePipeline(object):
             self.logger.info('收集视频评论详情信息')
             reply_tuple_list = list()
             for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+                reply_tuple = tuple([item['rank_item_bv'], reply['batch_id'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
                 reply_tuple_list.append(reply_tuple)
             self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
             
@@ -157,7 +165,7 @@ class BilibiliAnimePipeline(object):
             self.logger.info('收集视频弹幕详情信息')
             danmu_tuple_list = list()
             for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+                danmu_tuple = tuple([item['rank_item_bv'], danmu['batch_id'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
             
@@ -165,13 +173,14 @@ class BilibiliAnimePipeline(object):
             self.logger.info('收集视频标签详情信息')
             tag_tuple_list = list()
             for tag in item['rank_item_video_detail']['video_detail_tags']:
-                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple = tuple([item['rank_item_bv'], tag['batch_id'], tag['video_tag_context']])
                 tag_tuple_list.append(tag_tuple)
             self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'],
+                                                     item['rank_item_up_detail']['batch_id'], 
                                                      item['rank_item_up_detail']['up_uid'], 
                                                      item['rank_item_up_detail']['up_name'], 
                                                      item['rank_item_up_detail']['up_desc'], 
@@ -213,7 +222,8 @@ class BilibiliMusicPipeline(object):
         
         
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
-                                                                `bv`, 
+                                                                `bv`,
+                                                                `batch_id`, 
                                                                 `block_name`, 
                                                                 `order_num`, 
                                                                 `href`, 
@@ -224,10 +234,11 @@ class BilibiliMusicPipeline(object):
                                                                 `danmu`, 
                                                                 `star`, 
                                                                 `coin`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `title`, 
                                                                                 `play`, 
                                                                                 `danmu`, 
@@ -242,28 +253,32 @@ class BilibiliMusicPipeline(object):
                                                                                 `up_name`, 
                                                                                 `up_desc`, 
                                                                                 `up_gz`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `context`, 
                                                                                 `time`, 
                                                                                 `like`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `pubtime_in_video`, 
                                                                                 `context`, 
                                                                                 `pubtime`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
         
-        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`,
+                                                                            `batch_id`, 
                                                                             `tag`)
-                                        values (%s, %s)"""
+                                        values (%s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`,
+                                                                        `batch_id`, 
                                                                         `up_uid`, 
                                                                         `up_name`, 
                                                                         `up_desc`, 
@@ -271,7 +286,7 @@ class BilibiliMusicPipeline(object):
                                                                         `up_fs`, 
                                                                         `up_tg`, 
                                                                         `up_hj`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
         pass
@@ -288,7 +303,8 @@ class BilibiliMusicPipeline(object):
         
         try:
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
-                                                         item['rank_item_bv'], 
+                                                         item['rank_item_bv'],
+                                                         item['batch_id'], 
                                                          item['block_name'], 
                                                          item['rank_item_num'], 
                                                          item['rank_item_href'], 
@@ -302,7 +318,8 @@ class BilibiliMusicPipeline(object):
                 
                 
             self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'],
+                                                     item['rank_item_video_detail']['batch_id'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
                                                      item['rank_item_video_detail']['video_detail_play'], 
                                                      item['rank_item_video_detail']['video_detail_danmu'], 
@@ -322,7 +339,7 @@ class BilibiliMusicPipeline(object):
             self.logger.info('收集视频评论详情信息')
             reply_tuple_list = list()
             for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+                reply_tuple = tuple([item['rank_item_bv'], reply['batch_id'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
                 reply_tuple_list.append(reply_tuple)
             self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
            
@@ -330,7 +347,7 @@ class BilibiliMusicPipeline(object):
             self.logger.info('收集视频弹幕详情信息')
             danmu_tuple_list = list()
             for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+                danmu_tuple = tuple([item['rank_item_bv'], danmu['batch_id'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
             
@@ -338,13 +355,14 @@ class BilibiliMusicPipeline(object):
             self.logger.info('收集视频标签详情信息')
             tag_tuple_list = list()
             for tag in item['rank_item_video_detail']['video_detail_tags']:
-                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple = tuple([item['rank_item_bv'], tag['batch_id'], tag['video_tag_context']])
                 tag_tuple_list.append(tag_tuple)
             self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'],
+                                                     item['rank_item_up_detail']['batch_id'], 
                                                      item['rank_item_up_detail']['up_uid'], 
                                                      item['rank_item_up_detail']['up_name'], 
                                                      item['rank_item_up_detail']['up_desc'], 
@@ -387,7 +405,8 @@ class BilibiliDougaPipeline(object):
         
         
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
-                                                                `bv`, 
+                                                                `bv`,
+                                                                `batch_id`, 
                                                                 `block_name`, 
                                                                 `order_num`, 
                                                                 `href`, 
@@ -398,10 +417,11 @@ class BilibiliDougaPipeline(object):
                                                                 `danmu`, 
                                                                 `star`, 
                                                                 `coin`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `title`, 
                                                                                 `play`, 
                                                                                 `danmu`, 
@@ -416,28 +436,32 @@ class BilibiliDougaPipeline(object):
                                                                                 `up_name`, 
                                                                                 `up_desc`, 
                                                                                 `up_gz`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `context`, 
                                                                                 `time`, 
                                                                                 `like`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `pubtime_in_video`, 
                                                                                 `context`, 
                                                                                 `pubtime`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
         
-        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`,
+                                                                            `batch_id`, 
                                                                             `tag`)
-                                        values (%s, %s)"""
+                                        values (%s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`,
+                                                                        `batch_id`, 
                                                                         `up_uid`, 
                                                                         `up_name`, 
                                                                         `up_desc`, 
@@ -445,7 +469,7 @@ class BilibiliDougaPipeline(object):
                                                                         `up_fs`, 
                                                                         `up_tg`, 
                                                                         `up_hj`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
         pass
@@ -459,10 +483,11 @@ class BilibiliDougaPipeline(object):
         
         self.db_conn = self.pool.connection()
         self.db_cursor = self.db_conn.cursor()
-
+        
         try:
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
-                                                         item['rank_item_bv'], 
+                                                         item['rank_item_bv'],
+                                                         item['batch_id'], 
                                                          item['block_name'], 
                                                          item['rank_item_num'], 
                                                          item['rank_item_href'], 
@@ -476,7 +501,8 @@ class BilibiliDougaPipeline(object):
                 
                 
             self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'],
+                                                     item['rank_item_video_detail']['batch_id'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
                                                      item['rank_item_video_detail']['video_detail_play'], 
                                                      item['rank_item_video_detail']['video_detail_danmu'], 
@@ -496,7 +522,7 @@ class BilibiliDougaPipeline(object):
             self.logger.info('收集视频评论详情信息')
             reply_tuple_list = list()
             for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+                reply_tuple = tuple([item['rank_item_bv'], reply['batch_id'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
                 reply_tuple_list.append(reply_tuple)
             self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
            
@@ -504,7 +530,7 @@ class BilibiliDougaPipeline(object):
             self.logger.info('收集视频弹幕详情信息')
             danmu_tuple_list = list()
             for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+                danmu_tuple = tuple([item['rank_item_bv'], danmu['batch_id'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
             
@@ -512,13 +538,14 @@ class BilibiliDougaPipeline(object):
             self.logger.info('收集视频标签详情信息')
             tag_tuple_list = list()
             for tag in item['rank_item_video_detail']['video_detail_tags']:
-                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple = tuple([item['rank_item_bv'], tag['batch_id'], tag['video_tag_context']])
                 tag_tuple_list.append(tag_tuple)
             self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'],
+                                                     item['rank_item_up_detail']['batch_id'], 
                                                      item['rank_item_up_detail']['up_uid'], 
                                                      item['rank_item_up_detail']['up_name'], 
                                                      item['rank_item_up_detail']['up_desc'], 
@@ -534,6 +561,7 @@ class BilibiliDougaPipeline(object):
         finally:
             self.db_cursor.close()
             self.db_conn.close()
+        
         
         return item
     
@@ -560,7 +588,8 @@ class BilibiliGamePipeline(object):
         
         
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
-                                                                `bv`, 
+                                                                `bv`,
+                                                                `batch_id`, 
                                                                 `block_name`, 
                                                                 `order_num`, 
                                                                 `href`, 
@@ -571,10 +600,11 @@ class BilibiliGamePipeline(object):
                                                                 `danmu`, 
                                                                 `star`, 
                                                                 `coin`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `title`, 
                                                                                 `play`, 
                                                                                 `danmu`, 
@@ -589,28 +619,32 @@ class BilibiliGamePipeline(object):
                                                                                 `up_name`, 
                                                                                 `up_desc`, 
                                                                                 `up_gz`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `context`, 
                                                                                 `time`, 
                                                                                 `like`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `pubtime_in_video`, 
                                                                                 `context`, 
                                                                                 `pubtime`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
         
-        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`,
+                                                                            `batch_id`, 
                                                                             `tag`)
-                                        values (%s, %s)"""
+                                        values (%s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`,
+                                                                        `batch_id`, 
                                                                         `up_uid`, 
                                                                         `up_name`, 
                                                                         `up_desc`, 
@@ -618,7 +652,7 @@ class BilibiliGamePipeline(object):
                                                                         `up_fs`, 
                                                                         `up_tg`, 
                                                                         `up_hj`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
         pass
@@ -635,7 +669,8 @@ class BilibiliGamePipeline(object):
         
         try:
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
-                                                         item['rank_item_bv'], 
+                                                         item['rank_item_bv'],
+                                                         item['batch_id'], 
                                                          item['block_name'], 
                                                          item['rank_item_num'], 
                                                          item['rank_item_href'], 
@@ -649,7 +684,8 @@ class BilibiliGamePipeline(object):
                 
                 
             self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'],
+                                                     item['rank_item_video_detail']['batch_id'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
                                                      item['rank_item_video_detail']['video_detail_play'], 
                                                      item['rank_item_video_detail']['video_detail_danmu'], 
@@ -669,7 +705,7 @@ class BilibiliGamePipeline(object):
             self.logger.info('收集视频评论详情信息')
             reply_tuple_list = list()
             for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+                reply_tuple = tuple([item['rank_item_bv'], reply['batch_id'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
                 reply_tuple_list.append(reply_tuple)
             self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
            
@@ -677,7 +713,7 @@ class BilibiliGamePipeline(object):
             self.logger.info('收集视频弹幕详情信息')
             danmu_tuple_list = list()
             for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+                danmu_tuple = tuple([item['rank_item_bv'], danmu['batch_id'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
             
@@ -685,13 +721,14 @@ class BilibiliGamePipeline(object):
             self.logger.info('收集视频标签详情信息')
             tag_tuple_list = list()
             for tag in item['rank_item_video_detail']['video_detail_tags']:
-                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple = tuple([item['rank_item_bv'], tag['batch_id'], tag['video_tag_context']])
                 tag_tuple_list.append(tag_tuple)
             self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'],
+                                                     item['rank_item_up_detail']['batch_id'], 
                                                      item['rank_item_up_detail']['up_uid'], 
                                                      item['rank_item_up_detail']['up_name'], 
                                                      item['rank_item_up_detail']['up_desc'], 
@@ -734,7 +771,8 @@ class BilibiliKichikuPipeline(object):
         
         
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
-                                                                `bv`, 
+                                                                `bv`,
+                                                                `batch_id`, 
                                                                 `block_name`, 
                                                                 `order_num`, 
                                                                 `href`, 
@@ -745,10 +783,11 @@ class BilibiliKichikuPipeline(object):
                                                                 `danmu`, 
                                                                 `star`, 
                                                                 `coin`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `title`, 
                                                                                 `play`, 
                                                                                 `danmu`, 
@@ -763,28 +802,32 @@ class BilibiliKichikuPipeline(object):
                                                                                 `up_name`, 
                                                                                 `up_desc`, 
                                                                                 `up_gz`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `context`, 
                                                                                 `time`, 
                                                                                 `like`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `pubtime_in_video`, 
                                                                                 `context`, 
                                                                                 `pubtime`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
         
-        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`,
+                                                                            `batch_id`, 
                                                                             `tag`)
-                                        values (%s, %s)"""
+                                        values (%s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`,
+                                                                        `batch_id`, 
                                                                         `up_uid`, 
                                                                         `up_name`, 
                                                                         `up_desc`, 
@@ -792,7 +835,7 @@ class BilibiliKichikuPipeline(object):
                                                                         `up_fs`, 
                                                                         `up_tg`, 
                                                                         `up_hj`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
         pass
@@ -809,7 +852,8 @@ class BilibiliKichikuPipeline(object):
         
         try:
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
-                                                         item['rank_item_bv'], 
+                                                         item['rank_item_bv'],
+                                                         item['batch_id'], 
                                                          item['block_name'], 
                                                          item['rank_item_num'], 
                                                          item['rank_item_href'], 
@@ -823,7 +867,8 @@ class BilibiliKichikuPipeline(object):
                 
                 
             self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'],
+                                                     item['rank_item_video_detail']['batch_id'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
                                                      item['rank_item_video_detail']['video_detail_play'], 
                                                      item['rank_item_video_detail']['video_detail_danmu'], 
@@ -843,7 +888,7 @@ class BilibiliKichikuPipeline(object):
             self.logger.info('收集视频评论详情信息')
             reply_tuple_list = list()
             for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+                reply_tuple = tuple([item['rank_item_bv'], reply['batch_id'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
                 reply_tuple_list.append(reply_tuple)
             self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
            
@@ -851,7 +896,7 @@ class BilibiliKichikuPipeline(object):
             self.logger.info('收集视频弹幕详情信息')
             danmu_tuple_list = list()
             for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+                danmu_tuple = tuple([item['rank_item_bv'], danmu['batch_id'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
             
@@ -859,13 +904,14 @@ class BilibiliKichikuPipeline(object):
             self.logger.info('收集视频标签详情信息')
             tag_tuple_list = list()
             for tag in item['rank_item_video_detail']['video_detail_tags']:
-                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple = tuple([item['rank_item_bv'], tag['batch_id'], tag['video_tag_context']])
                 tag_tuple_list.append(tag_tuple)
             self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'],
+                                                     item['rank_item_up_detail']['batch_id'], 
                                                      item['rank_item_up_detail']['up_uid'], 
                                                      item['rank_item_up_detail']['up_name'], 
                                                      item['rank_item_up_detail']['up_desc'], 
@@ -908,7 +954,8 @@ class BilibiliEntPipeline(object):
         
         
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
-                                                                `bv`, 
+                                                                `bv`,
+                                                                `batch_id`, 
                                                                 `block_name`, 
                                                                 `order_num`, 
                                                                 `href`, 
@@ -919,10 +966,11 @@ class BilibiliEntPipeline(object):
                                                                 `danmu`, 
                                                                 `star`, 
                                                                 `coin`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `title`, 
                                                                                 `play`, 
                                                                                 `danmu`, 
@@ -937,28 +985,32 @@ class BilibiliEntPipeline(object):
                                                                                 `up_name`, 
                                                                                 `up_desc`, 
                                                                                 `up_gz`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `context`, 
                                                                                 `time`, 
                                                                                 `like`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `pubtime_in_video`, 
                                                                                 `context`, 
                                                                                 `pubtime`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
         
-        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`,
+                                                                            `batch_id`, 
                                                                             `tag`)
-                                        values (%s, %s)"""
+                                        values (%s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`,
+                                                                        `batch_id`, 
                                                                         `up_uid`, 
                                                                         `up_name`, 
                                                                         `up_desc`, 
@@ -966,7 +1018,7 @@ class BilibiliEntPipeline(object):
                                                                         `up_fs`, 
                                                                         `up_tg`, 
                                                                         `up_hj`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
         pass
@@ -983,7 +1035,8 @@ class BilibiliEntPipeline(object):
         
         try:
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
-                                                         item['rank_item_bv'], 
+                                                         item['rank_item_bv'],
+                                                         item['batch_id'], 
                                                          item['block_name'], 
                                                          item['rank_item_num'], 
                                                          item['rank_item_href'], 
@@ -997,7 +1050,8 @@ class BilibiliEntPipeline(object):
                 
                 
             self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'],
+                                                     item['rank_item_video_detail']['batch_id'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
                                                      item['rank_item_video_detail']['video_detail_play'], 
                                                      item['rank_item_video_detail']['video_detail_danmu'], 
@@ -1017,7 +1071,7 @@ class BilibiliEntPipeline(object):
             self.logger.info('收集视频评论详情信息')
             reply_tuple_list = list()
             for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+                reply_tuple = tuple([item['rank_item_bv'], reply['batch_id'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
                 reply_tuple_list.append(reply_tuple)
             self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
            
@@ -1025,7 +1079,7 @@ class BilibiliEntPipeline(object):
             self.logger.info('收集视频弹幕详情信息')
             danmu_tuple_list = list()
             for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+                danmu_tuple = tuple([item['rank_item_bv'], danmu['batch_id'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
             
@@ -1033,13 +1087,14 @@ class BilibiliEntPipeline(object):
             self.logger.info('收集视频标签详情信息')
             tag_tuple_list = list()
             for tag in item['rank_item_video_detail']['video_detail_tags']:
-                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple = tuple([item['rank_item_bv'], tag['batch_id'], tag['video_tag_context']])
                 tag_tuple_list.append(tag_tuple)
             self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'],
+                                                     item['rank_item_up_detail']['batch_id'], 
                                                      item['rank_item_up_detail']['up_uid'], 
                                                      item['rank_item_up_detail']['up_name'], 
                                                      item['rank_item_up_detail']['up_desc'], 
@@ -1082,7 +1137,8 @@ class BilibiliLifePipeline(object):
         
         
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
-                                                                `bv`, 
+                                                                `bv`,
+                                                                `batch_id`, 
                                                                 `block_name`, 
                                                                 `order_num`, 
                                                                 `href`, 
@@ -1093,10 +1149,11 @@ class BilibiliLifePipeline(object):
                                                                 `danmu`, 
                                                                 `star`, 
                                                                 `coin`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `title`, 
                                                                                 `play`, 
                                                                                 `danmu`, 
@@ -1111,28 +1168,32 @@ class BilibiliLifePipeline(object):
                                                                                 `up_name`, 
                                                                                 `up_desc`, 
                                                                                 `up_gz`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `context`, 
                                                                                 `time`, 
                                                                                 `like`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `pubtime_in_video`, 
                                                                                 `context`, 
                                                                                 `pubtime`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
         
-        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`,
+                                                                            `batch_id`, 
                                                                             `tag`)
-                                        values (%s, %s)"""
+                                        values (%s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`,
+                                                                        `batch_id`, 
                                                                         `up_uid`, 
                                                                         `up_name`, 
                                                                         `up_desc`, 
@@ -1140,7 +1201,7 @@ class BilibiliLifePipeline(object):
                                                                         `up_fs`, 
                                                                         `up_tg`, 
                                                                         `up_hj`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
         pass
@@ -1157,7 +1218,8 @@ class BilibiliLifePipeline(object):
         
         try:
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
-                                                         item['rank_item_bv'], 
+                                                         item['rank_item_bv'],
+                                                         item['batch_id'], 
                                                          item['block_name'], 
                                                          item['rank_item_num'], 
                                                          item['rank_item_href'], 
@@ -1171,7 +1233,8 @@ class BilibiliLifePipeline(object):
                 
                 
             self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'],
+                                                     item['rank_item_video_detail']['batch_id'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
                                                      item['rank_item_video_detail']['video_detail_play'], 
                                                      item['rank_item_video_detail']['video_detail_danmu'], 
@@ -1191,7 +1254,7 @@ class BilibiliLifePipeline(object):
             self.logger.info('收集视频评论详情信息')
             reply_tuple_list = list()
             for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+                reply_tuple = tuple([item['rank_item_bv'], reply['batch_id'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
                 reply_tuple_list.append(reply_tuple)
             self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
            
@@ -1199,7 +1262,7 @@ class BilibiliLifePipeline(object):
             self.logger.info('收集视频弹幕详情信息')
             danmu_tuple_list = list()
             for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+                danmu_tuple = tuple([item['rank_item_bv'], danmu['batch_id'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
             
@@ -1207,13 +1270,14 @@ class BilibiliLifePipeline(object):
             self.logger.info('收集视频标签详情信息')
             tag_tuple_list = list()
             for tag in item['rank_item_video_detail']['video_detail_tags']:
-                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple = tuple([item['rank_item_bv'], tag['batch_id'], tag['video_tag_context']])
                 tag_tuple_list.append(tag_tuple)
             self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'],
+                                                     item['rank_item_up_detail']['batch_id'], 
                                                      item['rank_item_up_detail']['up_uid'], 
                                                      item['rank_item_up_detail']['up_name'], 
                                                      item['rank_item_up_detail']['up_desc'], 
@@ -1256,7 +1320,8 @@ class BilibiliTechPipeline(object):
         
         
         self.insert_rank_item_sql = """insert into `bilibili_rank_items` (`channel_name`,
-                                                                `bv`, 
+                                                                `bv`,
+                                                                `batch_id`, 
                                                                 `block_name`, 
                                                                 `order_num`, 
                                                                 `href`, 
@@ -1267,10 +1332,11 @@ class BilibiliTechPipeline(object):
                                                                 `danmu`, 
                                                                 `star`, 
                                                                 `coin`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`, 
+        self.insert_video_detail_sql = """insert into `bilibili_videos_detail` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `title`, 
                                                                                 `play`, 
                                                                                 `danmu`, 
@@ -1285,28 +1351,32 @@ class BilibiliTechPipeline(object):
                                                                                 `up_name`, 
                                                                                 `up_desc`, 
                                                                                 `up_gz`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                                         
                                         
-        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`, 
+        self.insert_video_reply_sql = """insert into `bilibili_videos_replys` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `context`, 
                                                                                 `time`, 
                                                                                 `like`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
                                         
         
-        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`, 
+        self.insert_video_danmu_sql = """insert into `bilibili_videos_danmus` (`bv`,
+                                                                                `batch_id`, 
                                                                                 `pubtime_in_video`, 
                                                                                 `context`, 
                                                                                 `pubtime`) 
-                                        values (%s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s)"""
         
-        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`, 
+        self.insert_video_tag_sql = """insert into `bilibili_videos_tags` (`bv`,
+                                                                            `batch_id`, 
                                                                             `tag`)
-                                        values (%s, %s)"""
+                                        values (%s, %s, %s)"""
                                         
         
-        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`, 
+        self.insert_video_up_sql = """insert into `bilibili_ups_info` (`bv`,
+                                                                        `batch_id`, 
                                                                         `up_uid`, 
                                                                         `up_name`, 
                                                                         `up_desc`, 
@@ -1314,7 +1384,7 @@ class BilibiliTechPipeline(object):
                                                                         `up_fs`, 
                                                                         `up_tg`, 
                                                                         `up_hj`) 
-                                        values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
     
     def close_spider(self, spider):
         pass
@@ -1331,7 +1401,8 @@ class BilibiliTechPipeline(object):
         
         try:
             self.db_cursor.execute(self.insert_rank_item_sql, (item['channel_name'],
-                                                         item['rank_item_bv'], 
+                                                         item['rank_item_bv'],
+                                                         item['batch_id'], 
                                                          item['block_name'], 
                                                          item['rank_item_num'], 
                                                          item['rank_item_href'], 
@@ -1345,7 +1416,8 @@ class BilibiliTechPipeline(object):
                 
                 
             self.logger.info('收集视频详情信息')
-            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_detail_sql, (item['rank_item_bv'],
+                                                     item['rank_item_video_detail']['batch_id'], 
                                                      item['rank_item_video_detail']['video_detail_title'], 
                                                      item['rank_item_video_detail']['video_detail_play'], 
                                                      item['rank_item_video_detail']['video_detail_danmu'], 
@@ -1365,7 +1437,7 @@ class BilibiliTechPipeline(object):
             self.logger.info('收集视频评论详情信息')
             reply_tuple_list = list()
             for reply in item['rank_item_video_detail']['video_detail_hot_replys']:
-                reply_tuple = tuple([item['rank_item_bv'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
+                reply_tuple = tuple([item['rank_item_bv'], reply['batch_id'], reply['video_reply_context'], reply['video_reply_time'], reply['video_reply_like']])
                 reply_tuple_list.append(reply_tuple)
             self.db_cursor.executemany(self.insert_video_reply_sql, reply_tuple_list)
            
@@ -1373,7 +1445,7 @@ class BilibiliTechPipeline(object):
             self.logger.info('收集视频弹幕详情信息')
             danmu_tuple_list = list()
             for danmu in item['rank_item_video_detail']['video_detail_danmus']:
-                danmu_tuple = tuple([item['rank_item_bv'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
+                danmu_tuple = tuple([item['rank_item_bv'], danmu['batch_id'], danmu['video_danmu_pubtime_in_video'], danmu['video_danmu_context'], danmu['video_danmu_pubtime']])
                 danmu_tuple_list.append(danmu_tuple)
             self.db_cursor.executemany(self.insert_video_danmu_sql, danmu_tuple_list)
             
@@ -1381,13 +1453,14 @@ class BilibiliTechPipeline(object):
             self.logger.info('收集视频标签详情信息')
             tag_tuple_list = list()
             for tag in item['rank_item_video_detail']['video_detail_tags']:
-                tag_tuple = tuple([item['rank_item_bv'], tag])
+                tag_tuple = tuple([item['rank_item_bv'], tag['batch_id'], tag['video_tag_context']])
                 tag_tuple_list.append(tag_tuple)
             self.db_cursor.executemany(self.insert_video_tag_sql, tag_tuple_list)
             
             
             self.logger.info('收集视频发布人up详情信息')
-            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'], 
+            self.db_cursor.execute(self.insert_video_up_sql, (item['rank_item_bv'],
+                                                     item['rank_item_up_detail']['batch_id'], 
                                                      item['rank_item_up_detail']['up_uid'], 
                                                      item['rank_item_up_detail']['up_name'], 
                                                      item['rank_item_up_detail']['up_desc'], 

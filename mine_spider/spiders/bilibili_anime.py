@@ -5,7 +5,7 @@ Created on Sat Sep 16 19:39:43 2023
 @author: Administrator
 """
 
-from ..items import BilibiliRankItem, BilibiliVideoDetail, BilibiliVideoDanmu, BilibiliVideoReply, BilibiliUpInfo
+from ..items import BilibiliRankItem, BilibiliVideoDetail, BilibiliVideoDanmu, BilibiliVideoReply, BilibiliVideoTag, BilibiliUpInfo
 from scrapy import Spider, Selector, Request
 # from datetime import datetime
 from playwright.sync_api import TimeoutError
@@ -13,6 +13,7 @@ from playwright._impl._api_types import Error
 from scrapy_playwright.page import PageMethod
 
 from datetime import datetime
+import uuid
 
 
 class BilibiliAnimeSpider(Spider):
@@ -38,6 +39,7 @@ class BilibiliAnimeSpider(Spider):
         self.channel_name : str = 'anime'        
         self.url_prefix : str = 'https:'
         self.result_by_dict : dict = dict()
+        self.batch_id : str = uuid.uuid1()
     
     def start_requests(self):
         yield Request(url = self.start_url,
@@ -143,6 +145,7 @@ class BilibiliAnimeSpider(Spider):
                     animeRankItem['rank_item_bv'] = rank_item_href.split('/')[4]
                     animeRankItem['rank_item_detail_title'] = rank_item_detail_title
                     animeRankItem['rank_item_detail_point'] = rank_item_detail_point
+                    animeRankItem['batch_id'] = self.batch_id
                     
                     if block_name != '完结动画':
                         await rank_item.hover()
@@ -223,6 +226,7 @@ class BilibiliAnimeSpider(Spider):
                     animeRankItem['rank_item_bv'] = rank_item_href.split('/')[4]
                     animeRankItem['rank_item_detail_title'] = rank_item_detail_title
                     animeRankItem['rank_item_detail_point'] = rank_item_detail_point
+                    animeRankItem['batch_id'] = self.batch_id
                     
                     if block_name != '完结动画':
                         await rank_item.hover()
@@ -329,6 +333,7 @@ class BilibiliAnimeSpider(Spider):
         try:
             
             rank_item_video_detail = BilibiliVideoDetail()
+            rank_item_video_detail['batch_id'] = self.batch_id
             
             self.logger.info('获取视频详情, 请求频道{}，视频链接{}, ua为{}'.format(self.channel_name, response.request.url, response.request.headers['user-agent']))
             
@@ -426,6 +431,7 @@ class BilibiliAnimeSpider(Spider):
                 dammu_item['video_danmu_context'] = dammu_item_selector.xpath(".//span[@class='dm-info-dm']/text()").extract_first().strip()
                 # 弹幕发送时间
                 dammu_item['video_danmu_pubtime'] = dammu_item_selector.xpath(".//span[@class='dm-info-date']/text()").extract_first().strip()
+                dammu_item['batch_id'] = self.batch_id
                 rank_item_video_danmu_list.append(dammu_item)
             rank_item_video_detail['video_detail_danmus'] = rank_item_video_danmu_list
             
@@ -558,14 +564,26 @@ class BilibiliAnimeSpider(Spider):
             rank_item_video_tag_list : list = []
             
             for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link topic-link']/span[@class='tag-txt']/text()"):
+                tag_item = BilibiliVideoTag()
                 # 视频标签
-                rank_item_video_tag_list.append(tag_selector.get().strip())
+                tag_item['video_tag_context'] = tag_selector.get().strip()
+                tag_item['batch_id'] = self.batch_id
+                rank_item_video_tag_list.append(tag_item)
+                #rank_item_video_tag_list.append(tag_selector.get().strip())
             for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link newchannel-link van-popover__reference']/text()"):
+                tag_item = BilibiliVideoTag()
                 # 视频标签
-                rank_item_video_tag_list.append(tag_selector.get().strip())
+                tag_item['video_tag_context'] = tag_selector.get().strip()
+                tag_item['batch_id'] = self.batch_id
+                rank_item_video_tag_list.append(tag_item)
+                #rank_item_video_tag_list.append(tag_selector.get().strip())
             for tag_selector in under_video_container.xpath("//div[@class='tag not-btn-tag']/descendant::a[@class='tag-link']/text()"):
+                tag_item = BilibiliVideoTag()
                 # 视频标签
-                rank_item_video_tag_list.append(tag_selector.get().strip())
+                tag_item['video_tag_context'] = tag_selector.get().strip()
+                tag_item['batch_id'] = self.batch_id
+                rank_item_video_tag_list.append(tag_item)
+                #rank_item_video_tag_list.append(tag_selector.get().strip())
             
             rank_item_video_detail['video_detail_tags'] = rank_item_video_tag_list
             
@@ -609,6 +627,7 @@ class BilibiliAnimeSpider(Spider):
             if selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']") is not None:
                 for list_item_selector in selector.xpath(query = "//div[@class='reply-list']/descendant::div[@class='root-reply']"):
                     reply_item = BilibiliVideoReply()
+                    reply_item['batch_id'] = self.batch_id
                     # 评论内容
                     #reply_item['video_reply_context'] = list_item_selector.xpath(".//span[@class='reply-content']/text()").extract_first()
                     reply_item['video_reply_context'] = list_item_selector.xpath("string(.//span[@class='reply-content'])").extract_first()
@@ -622,6 +641,7 @@ class BilibiliAnimeSpider(Spider):
             elif selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']") is not None:
                 for list_item_selector in selector.xpath(query = "//div[@class='comment-list ']/descendant::div[@class='con ']"):
                     reply_item = BilibiliVideoReply()
+                    reply_item['batch_id'] = self.batch_id
                     # 评论内容
                     #reply_item['video_reply_context'] = list_item_selector.xpath(".//p[@class='text']/text()").extract_first()
                     reply_item['video_reply_context'] = list_item_selector.xpath("string(.//p[@class='text'])").extract_first()
@@ -715,6 +735,7 @@ class BilibiliAnimeSpider(Spider):
         await page.wait_for_load_state('networkidle')
         
         bilibiliUpInfo = BilibiliUpInfo()
+        bilibiliUpInfo['batch_id'] = self.batch_id
         try:
             await page.locator("//div[@class='geetest_panel geetest_wind']").wait_for(timeout=1000 * 10)
         except (TimeoutError, Error):

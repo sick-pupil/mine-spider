@@ -43,6 +43,8 @@ class BilibiliRankItem(Item):
     rank_item_video_detail : object = Field()
     # 视频发布人信息
     rank_item_up_detail : object = Field()
+    # 爬取批次
+    batch_id : str = Field()
     
     def to_tuple(self):
         return (self.rank_item_bv, 
@@ -97,6 +99,8 @@ class BilibiliVideoDetail(Item):
     video_detail_up_desc : str = Field()
     # 视频发布人被关注数量
     video_detail_up_gz : str = Field()
+    # 爬取批次
+    batch_id : str = Field()
     
     def to_tuple(self):
         return (self.video_detail_title, 
@@ -123,6 +127,8 @@ class BilibiliVideoDanmu(Item):
     video_danmu_context : str = Field()
     # 弹幕发送时间
     video_danmu_pubtime : str = Field()
+    # 爬取批次
+    batch_id : str = Field()
     
     def to_tuple(self):
         return (self.video_danmu_pubtime_in_video, 
@@ -138,11 +144,25 @@ class BilibiliVideoReply(Item):
     video_reply_time : str = Field()
     # 评论被点赞数
     video_reply_like : str = Field()
+    # 爬取批次
+    batch_id : str = Field()
     
     def to_tuple(self):
         return (self.video_reply_context, 
                 self.video_reply_time, 
                 self.video_reply_like)
+
+# 视频标签详情
+class BilibiliVideoTag(Item):
+    
+    # 标签内容
+    video_tag_context : str = Field()
+    # 爬取批次
+    batch_id : str = Field()
+    
+    def to_tuple(self):
+        return (self.video_tag_context, 
+                self.batch_id)
 
 # 视频发布人信息
 class BilibiliUpInfo(Item):
@@ -161,6 +181,8 @@ class BilibiliUpInfo(Item):
     up_hj : str = Field()
     # up uid
     up_uid : str = Field()
+    # 爬取批次
+    batch_id : str = Field()
     
     def to_tuple(self):
         return (self.up_uid, 
